@@ -9,7 +9,7 @@
 
     // Aparece no rodapé. Ex.: 'Guerra · Corretor de imóveis · CRECI 000000-F'
     // Deixe vazio ('') para não mostrar.
-    creci: '267059-f',
+    creci: 'Gabriel Guerra - Corretor de imóveis - CRECI 267059-f',
 
     // ID do Pixel da Meta (Facebook/Instagram Ads). Ex.: '123456789012345'
     // Se preenchido, a página registra PageView e dispara "Lead" no envio do formulário.
