@@ -1,0 +1,80 @@
+LANDING PAGE · JOY LAPA (Cavazani · Minha Casa Minha Vida)
+==========================================================
+
+1) CONFIGURAÇÕES RÁPIDAS
+------------------------
+Abra js/main.js e preencha o bloco "EDITE AQUI" no topo:
+
+  const CONFIG = {
+    whatsapp: '5511945913535',   → número que recebe os leads (55 + DDD + número)
+    creci: '',                   → ex.: 'Guerra · Corretor de imóveis · CRECI 000000-F'
+                                   (aparece no rodapé; anúncio de imóvel deve ter o CRECI)
+    metaPixelId: '',             → ID do Pixel da Meta, se for rodar anúncio no Face/Insta.
+                                   Com ele preenchido a página registra PageView, "Lead"
+                                   no envio do formulário e "Contact" no botão de WhatsApp.
+    mensagemPadrao: '...',       → texto dos botões de WhatsApp direto
+  };
+
+
+2) COMO FUNCIONA O FORMULÁRIO
+-----------------------------
+A pessoa preenche nome, WhatsApp, renda, FGTS e planta. Ao enviar:
+  1. o lead é salvo no Netlify Forms (aba "Forms" do site na Netlify);
+  2. o WhatsApp abre com a mensagem já preenchida, por exemplo:
+
+     Olá! Quero simular o Joy Lapa.
+     Nome: Maria
+     WhatsApp: (11) 91234-5678
+     Renda familiar: R$ 3.200 a R$ 5.000
+     3+ anos de carteira (FGTS): Sim
+     Planta de interesse: Select (2 dorms, 34 m²)
+
+Mesmo que a pessoa desista de mandar a mensagem, o contato fica salvo na Netlify.
+As UTMs do anúncio (utm_source, utm_campaign...) também vão junto no lead.
+
+IMPORTANTE: em site novo, a Netlify vem com a detecção de formulários DESLIGADA.
+Depois de publicar:
+  Site configuration > Forms > "Enable form detection"
+e publique de novo (arraste a pasta outra vez ou faça um push).
+Para receber cada lead por e-mail: Forms > Form notifications > Add notification > Email.
+
+Rodando no seu computador (python3 -m http.server) o salvamento não funciona
+(dá erro 501), mas o WhatsApp abre normalmente. Na Netlify funciona tudo.
+
+
+3) IMAGENS
+----------
+Todas as imagens saíram do book oficial (BOOK JOY LAPA.pdf) e estão em assets/img/.
+  - Versão "-sm" (760 px) aparece na página; a versão grande (1400 px) abre ao clicar.
+  - Para trocar uma imagem, mantenha o mesmo nome de arquivo.
+  - og-image.jpg (1200 x 630) é a prévia que aparece quando o link é compartilhado.
+
+
+4) PUBLICAR NA NETLIFY
+---------------------
+Opção mais simples:
+  1. Acesse https://app.netlify.com/drop
+  2. Arraste a pasta "joy-lapa" inteira.
+  3. Site configuration > Change site name → ex.: joylapa → https://joylapa.netlify.app
+  4. Ative a detecção de formulários (item 2) e publique de novo.
+
+Se o endereço final NÃO for https://joylapa.netlify.app, troque no index.html:
+canonical, og:url, og:image e twitter:image.
+
+
+5) PONTOS PARA REVISAR ANTES DE ANUNCIAR
+----------------------------------------
+- Preços "a partir de" (R$ 229 mil / 249 mil / 299 mil) e "Escritura grátis":
+  confirmar com a Cavazani se continuam valendo. O book também mostra uma
+  tabela do Select de R$ 269.000; a página usa o menor valor (R$ 249.000).
+- Garden: está como "Consulte" (o book não traz preço).
+- Selo do Prime: o book usa ora 37 m², ora 38 m² (planta tipo A = 38,10 m²). A página usa 38 m².
+- Regras do MCMV (faixas de renda, subsídio de até R$ 55 mil, juros a partir de 4% a.a.,
+  tetos de R$ 275/400/600 mil) seguem a Portaria MCID nº 333/2026, em vigor desde abril/2026.
+  Se o governo mudar as regras, atualize a seção "Minha Casa Minha Vida", o bloco FAIXAS
+  em js/main.js e o FAQ.
+- "5 min da Estação Lapa": o book indica 5 min DE BIKE, e a página diz isso.
+- Benefícios "Indique e ganhe R$ 1.000" e "10% de desconto no boleto em dia": conferir regulamento.
+- Rodapé: o texto legal diz que a venda só começa após o registro do memorial de incorporação.
+  Quando sair o número do R.I., vale incluir no rodapé.
+- CRECI: preencher no CONFIG (item 1).
