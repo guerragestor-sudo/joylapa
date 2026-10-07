@@ -19,6 +19,15 @@
 
     // Mensagem dos botões de WhatsApp direto (sem formulário)
     mensagemPadrao: 'Olá! Quero saber mais sobre o Joy Lapa.',
+
+    // Faixa de lançamento no topo da página.
+    // Antes da data: contagem regressiva. No dia: "É hoje!". Depois: "Em lançamento".
+    lancamento: {
+      ativo: true,          // false esconde a faixa
+      data: '24/10/2026',   // dia do lançamento (dd/mm/aaaa)
+      hora: '00:00',        // hora em que a contagem zera (horário de Brasília)
+      mostrarDepois: true,  // depois do dia do lançamento, mantém a faixa "Em lançamento"
+    },
   };
   /* ==================================== */
 
@@ -62,6 +71,94 @@
     a.rel = 'noopener';
     a.addEventListener('click', () => track('Contact'));
   });
+
+  /* ---------- Faixa de lançamento ---------- */
+  const L = CONFIG.lancamento || {};
+  const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const [ld, lm, ly] = String(L.data || '').split('/').map(Number);
+  const [lh = 0, lmin = 0] = String(L.hora || '00:00').split(':').map(Number);
+  // Brasília = UTC-3 (sem horário de verão desde 2019)
+  const launchAt = L.ativo && ld && lm && ly ? Date.UTC(ly, lm - 1, ld, lh + 3, lmin) : null;
+  const launchDayEnd = launchAt ? Date.UTC(ly, lm - 1, ld + 1, 3, 0) : null;
+
+  // Para conferir as fases antes da data: ?preview_lancamento=2026-10-24T10:00
+  let clockOffset = 0;
+  const preview = new URLSearchParams(location.search).get('preview_lancamento');
+  if (preview) {
+    const t = Date.parse(/(z|[+-]\d\d:?\d\d)$/i.test(preview) ? preview : `${preview}${preview.length <= 16 ? ':00' : ''}-03:00`);
+    if (!Number.isNaN(t)) clockOffset = t - Date.now();
+  }
+  const now = () => Date.now() + clockOffset;
+  const launchPhase = () => {
+    if (!launchAt) return '';
+    const t = now();
+    if (t < launchAt) return 'antes';
+    return t < launchDayEnd ? 'hoje' : 'depois';
+  };
+
+  const dd = String(ld).padStart(2, '0');
+  const mm = String(lm).padStart(2, '0');
+  const LAUNCH_TEXT = {
+    antes: {
+      title: `Lançamento oficial · ${ld} de ${MESES[lm - 1]}`,
+      cta: 'Entrar na lista VIP',
+      pill: `Lançamento em ${dd}/${mm} · Lapa · Água Branca`,
+      eyebrow: 'Lista VIP do lançamento',
+      msg: 'Olá! Quero entrar na lista VIP do lançamento do Joy Lapa.',
+    },
+    hoje: {
+      title: 'É hoje! Lançamento oficial do Joy Lapa',
+      cta: 'Quero minha simulação',
+      pill: 'Lançamento oficial hoje · Lapa · Água Branca',
+      eyebrow: 'Lançamento oficial hoje',
+      msg: 'Olá! Quero aproveitar o lançamento do Joy Lapa.',
+    },
+    depois: {
+      title: 'Joy Lapa em lançamento · consulte as condições',
+      cta: 'Simular agora',
+      pill: 'Em lançamento na Lapa · Água Branca',
+      eyebrow: 'Simulação grátis',
+      msg: 'Olá! Quero simular o Joy Lapa.',
+    },
+  };
+  const launchMsg = () => (LAUNCH_TEXT[launchPhase()] || LAUNCH_TEXT.depois).msg;
+
+  const banner = $('[data-launch]');
+  if (banner && launchAt) {
+    const setText = (sel, text) => $$(sel).forEach((el) => (el.textContent = text));
+    const digitsEl = { d: $('[data-cd="d"]'), h: $('[data-cd="h"]'), m: $('[data-cd="m"]'), s: $('[data-cd="s"]') };
+    const countEl = $('[data-launch-count]');
+    const pad = (n) => String(n).padStart(2, '0');
+    let current = '';
+    let timer = null;
+
+    const render = () => {
+      const phase = launchPhase();
+      if (phase !== current) {
+        current = phase;
+        const t = LAUNCH_TEXT[phase];
+        banner.hidden = phase === 'depois' && !L.mostrarDepois;
+        ['antes', 'hoje', 'depois'].forEach((f) => banner.classList.toggle(`launch--${f}`, f === phase));
+        banner.setAttribute('aria-label', phase === 'antes' ? `Lançamento oficial do Joy Lapa em ${ld} de ${MESES[lm - 1]} de ${ly}` : t.title);
+        countEl.hidden = phase !== 'antes';
+        setText('[data-launch-title]', t.title);
+        $('[data-launch-cta]').innerHTML = `${t.cta} <svg aria-hidden="true"><use href="#i-arrow"/></svg>`;
+        setText('[data-launch-pill]', t.pill);
+        setText('[data-launch-eyebrow]', t.eyebrow);
+        if (phase !== 'antes' && timer) { clearInterval(timer); timer = null; }
+      }
+      if (phase === 'antes') {
+        const diff = Math.max(0, launchAt - now());
+        const sec = Math.floor(diff / 1000);
+        digitsEl.d.textContent = pad(Math.floor(sec / 86400));
+        digitsEl.h.textContent = pad(Math.floor((sec % 86400) / 3600));
+        digitsEl.m.textContent = pad(Math.floor((sec % 3600) / 60));
+        digitsEl.s.textContent = pad(sec % 60);
+      }
+    };
+    render();
+    if (current === 'antes') timer = setInterval(render, 1000);
+  }
 
   /* ---------- Topo com sombra ao rolar ---------- */
   const topbar = $('.topbar');
@@ -326,11 +423,13 @@
     const firstBad = results.find(([, ok]) => !ok);
     if (firstBad) { form.elements[firstBad[0]].focus(); return; }
 
+    const FASES = { antes: 'Pré-lançamento (lista VIP)', hoje: 'Dia do lançamento', depois: 'Pós-lançamento' };
+    if (form.elements.fase) form.elements.fase.value = FASES[launchPhase()] || '';
     const data = new FormData(form);
     const nome = String(data.get('nome')).trim();
     const fgts = data.get('fgts') || 'Não informado';
     const msg = [
-      'Olá! Quero simular o Joy Lapa.',
+      launchMsg(),
       `Nome: ${nome}`,
       `WhatsApp: ${fmtPhone(String(data.get('whatsapp')))}`,
       `Renda familiar: ${data.get('renda')}`,

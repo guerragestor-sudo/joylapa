@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="preload" as="image" href="assets/img/hero.jpg" imagesrcset="assets/img/hero-sm.jpg 760w, assets/img/hero.jpg 1400w" imagesizes="(min-width: 960px) 1300px, 140vw">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
   <script>document.documentElement.classList.add('js')</script>
 
   <script type="application/ld+json">
@@ -94,6 +94,24 @@
 
   <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 
+  <!-- Faixa de lançamento (data e textos no CONFIG do js/main.js) -->
+  <aside class="launch" data-launch hidden aria-label="Lançamento do Joy Lapa">
+    <div class="container launch__in">
+      <p class="launch__title">
+        <svg aria-hidden="true"><use href="#i-cal"/></svg>
+        <span data-launch-title>Lançamento oficial</span>
+      </p>
+      <div class="launch__count" data-launch-count aria-hidden="true">
+        <span class="launch__label" data-launch-label>faltam</span>
+        <span class="launch__unit"><b data-cd="d">00</b><small>dias</small></span>
+        <span class="launch__unit"><b data-cd="h">00</b><small>h</small></span>
+        <span class="launch__unit"><b data-cd="m">00</b><small>min</small></span>
+        <span class="launch__unit"><b data-cd="s">00</b><small>s</small></span>
+      </div>
+      <a class="launch__cta" href="#simular" data-launch-cta>Entrar na lista VIP <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+    </div>
+  </aside>
+
   <!-- Topo -->
   <header class="topbar">
     <div class="container topbar__in">
@@ -119,7 +137,7 @@
     <section id="topo" class="hero" aria-labelledby="hero-title">
       <div class="container hero__in">
         <div class="hero__copy">
-          <p class="pill rise"><span class="pill__dot" aria-hidden="true"></span>Breve lançamento na Lapa · Água Branca</p>
+          <p class="pill rise"><span class="pill__dot" aria-hidden="true"></span><span data-launch-pill>Breve lançamento na Lapa · Água Branca</span></p>
           <h1 id="hero-title" class="h1 rise" style="--d:1">O novo endereço da sua <span class="joy-text">felicidade.</span></h1>
           <p class="hero__lead rise" style="--d:2">Apartamentos de <strong>1 e 2 dormitórios com opção de suíte</strong>, lazer completo e a 5 min de bike da Estação Lapa. Pelo <strong>Minha Casa Minha Vida</strong>, com subsídio de até R$&nbsp;55&nbsp;mil e uso do FGTS.</p>
 
@@ -610,7 +628,7 @@
     <section id="simular" class="section section--deep section--form" aria-labelledby="form-title" data-hide-sticky>
       <div class="container cta">
         <div class="cta__copy">
-          <p class="eyebrow eyebrow--light">Simulação grátis</p>
+          <p class="eyebrow eyebrow--light" data-launch-eyebrow>Simulação grátis</p>
           <h2 id="form-title" class="h2">Descubra como ter o seu Joy Lapa <span class="orange-text">sem pagar aluguel.</span></h2>
           <p class="lead">Preencha em 30 segundos. Seus dados vão direto para o nosso WhatsApp e um especialista em Minha Casa Minha Vida responde com a sua simulação.</p>
           <ul class="checks checks--light">
@@ -625,6 +643,7 @@
           <p class="hp"><label>Não preencha: <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
           <input type="hidden" name="utm_source"><input type="hidden" name="utm_medium"><input type="hidden" name="utm_campaign"><input type="hidden" name="utm_content"><input type="hidden" name="utm_term">
           <input type="hidden" name="pagina">
+          <input type="hidden" name="fase">
 
           <h3 class="form__title">Quero minha simulação</h3>
 
@@ -725,6 +744,6 @@
     <button type="button" class="round-btn lightbox__next" data-lb-step="1" aria-label="Próxima imagem"><svg aria-hidden="true"><use href="#i-right"/></svg></button>
   </dialog>
 
-  <script src="js/main.js?v=3" defer></script>
+  <script src="js/main.js?v=4" defer></script>
 </body>
 </html>

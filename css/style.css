@@ -145,6 +145,44 @@ strong, b { font-weight: 700; }
 .round-btn:hover { border-color: var(--ink); }
 .round-btn:disabled { opacity: .35; cursor: default; }
 
+/* ============ Faixa de lançamento ============ */
+.launch {
+  position: relative;
+  background: var(--deep); color: #fff;
+  font-size: .9rem;
+}
+.launch::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--joy); }
+.launch__in {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 6px 14px; padding-top: 9px; padding-bottom: 12px; text-align: center;
+}
+.launch__title { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: -.005em; }
+.launch__title svg { font-size: 1.05rem; color: var(--orange-300); }
+.launch__count { display: inline-flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.launch__label { font-size: .78rem; font-weight: 600; color: rgba(255, 255, 255, .75); margin-right: 2px; }
+.launch__unit {
+  display: inline-flex; align-items: baseline; gap: 2px;
+  padding: 3px 7px; border-radius: 8px; background: rgba(255, 255, 255, .12);
+}
+.launch__unit b { font-size: 1rem; font-weight: 800; min-width: 2ch; text-align: center; }
+.launch__unit small { font-size: .68rem; font-weight: 700; color: rgba(255, 255, 255, .72); }
+.launch__cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 34px; padding: 6px 14px; border-radius: 999px;
+  background: var(--orange); color: var(--ink);
+  font-size: .84rem; font-weight: 800; text-decoration: none; white-space: nowrap;
+  transition: background-color .2s;
+}
+.launch__cta:hover { background: #f79a3c; }
+.launch__cta svg { font-size: 1rem; }
+@media (max-width: 559px) {
+  .launch__in { gap: 6px 10px; padding-top: 8px; padding-bottom: 11px; }
+  .launch__title { width: 100%; justify-content: center; font-size: .86rem; }
+  .launch__unit { padding: 2px 6px; }
+  .launch__cta { min-height: 32px; padding: 5px 12px; font-size: .8rem; }
+  .launch--antes .launch__cta { display: none; }
+}
+
 /* ============ Topo ============ */
 .topbar {
   position: sticky; top: 0; z-index: 50;

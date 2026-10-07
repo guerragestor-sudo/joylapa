@@ -15,7 +15,28 @@ Abra js/main.js e preencha o bloco "EDITE AQUI" no topo:
                                    Com ele preenchido a página registra PageView, "Lead"
                                    no envio do formulário e "Contact" no botão de WhatsApp.
     mensagemPadrao: '...',       → texto dos botões de WhatsApp direto
+    lancamento: {
+      ativo: true,                 → false esconde a faixa de lançamento
+      data: '24/10/2026',          → dia do lançamento (dd/mm/aaaa)
+      hora: '00:00',               → hora em que a contagem zera (horário de Brasília)
+      mostrarDepois: true,         → depois do dia D, mantém a faixa "Em lançamento"
+    },
   };
+
+FAIXA DE LANÇAMENTO (topo da página) — muda sozinha conforme a data:
+  - Antes de 24/10: "Lançamento oficial · 24 de outubro" + contagem regressiva
+    + botão "Entrar na lista VIP". O selo do topo vira "Lançamento em 24/10" e o
+    formulário vira "Lista VIP do lançamento".
+  - No dia 24/10: "É hoje! Lançamento oficial do Joy Lapa" + "Quero minha simulação".
+  - Depois: "Joy Lapa em lançamento · consulte as condições" + "Simular agora".
+  A mensagem que chega no WhatsApp também muda ("Quero entrar na lista VIP...",
+  "Quero aproveitar o lançamento...") e o lead no Netlify Forms vem com o campo
+  "fase" (Pré-lançamento / Dia do lançamento / Pós-lançamento).
+
+  Para ver como a página fica em outra data, abra o site com:
+    ?preview_lancamento=2026-10-24T10:00   (dia do lançamento)
+    ?preview_lancamento=2026-10-25T10:00   (depois)
+  Isso só muda o que VOCÊ vê; os visitantes continuam vendo a data real.
 
 
 2) COMO FUNCIONA O FORMULÁRIO
