@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Carrossel Joy Lapa · Próxima estação: o seu apê</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=block" rel="stylesheet">
+<style>
+  :root {
+    --wine: #8e1b2e; --wine-700: #6f1323; --wine-50: #fbeef0; --red: #c8283a;
+    --violet: #5a2386; --indigo: #3b2d93; --orange: #f08a24; --orange-300: #ffb45c; --orange-50: #fff2e4; --orange-ink: #a2500b;
+    --ink: #1f1633; --ink-2: #3f3753; --muted: #645d78; --bg: #fbf8f4; --line: #e8e1ec;
+    --joy: linear-gradient(90deg, #57b7e8, #7dd6a4, #f3d36b, #f39a7a, #b77cdd, #57b7e8, #7dd6a4, #f3d36b, #f39a7a, #b77cdd);
+    --joy-short: linear-gradient(100deg, #57b7e8 0%, #7dd6a4 22%, #f3d36b 45%, #f39a7a 68%, #b77cdd 100%);
+    --joy-text: linear-gradient(95deg, #8e1b2e 0%, #d23c35 50%, #f08a24 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; background: var(--bg); }
+  body.full { width: 8640px; }
+  body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  img { display: block; }
+  svg { width: 1em; height: 1em; flex: none; }
+
+  #canvas { position: absolute; top: 0; left: 0; width: 8640px; height: 1350px; overflow: hidden; background: var(--bg); }
+  .abs { position: absolute; }
+
+  /* Fundo contínuo */
+  .blob { position: absolute; border-radius: 50%; pointer-events: none; }
+  #deep {
+    position: absolute; left: 7330px; top: 0; width: 1310px; height: 1350px;
+    background: linear-gradient(150deg, #5a2386 0%, #3b2d93 55%, #273c9f 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 230px); mask-image: linear-gradient(90deg, transparent 0, #000 230px);
+  }
+
+  /* Linha do trem */
+  #line { position: absolute; left: 150px; top: 1143px; width: 8170px; height: 16px; border-radius: 8px; background: var(--joy); box-shadow: 0 0 0 5px rgba(255, 255, 255, .65), 0 10px 24px -10px rgba(31, 22, 51, .5); z-index: 2; }
+  .node { position: absolute; top: 1151px; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: #fff; border: 11px solid var(--ink); z-index: 3; box-shadow: 0 8px 18px -8px rgba(31, 22, 51, .6); }
+  .node.start { border-color: var(--wine); }
+  .station { position: absolute; top: 1192px; transform: translateX(-50%); text-align: center; z-index: 3; line-height: 1.1; white-space: nowrap; }
+  .station small { display: block; font-size: 19px; font-weight: 800; letter-spacing: .2em; color: var(--muted); }
+  .station b { display: block; margin-top: 6px; font-size: 31px; font-weight: 800; letter-spacing: -.01em; }
+  .next { position: absolute; top: 1206px; right: 64px; display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--orange-ink); z-index: 3; }
+  .next svg { width: 34px; height: 34px; padding: 6px; border-radius: 50%; background: var(--orange); color: var(--ink); }
+
+  /* Telas */
+  .slide { position: absolute; top: 0; width: 1080px; height: 1350px; }
+  .eyebrow { position: absolute; left: 72px; top: 104px; display: flex; align-items: center; gap: 14px; font-size: 25px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--wine); }
+  .eyebrow::before { content: ""; width: 48px; height: 8px; border-radius: 8px; background: var(--joy-short); }
+  .eyebrow i { font-style: normal; color: var(--muted); }
+  h2 { position: absolute; left: 72px; top: 152px; width: 936px; font-size: 78px; line-height: .98; letter-spacing: -.045em; font-weight: 800; }
+  .joy { background: var(--joy-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .legal { position: absolute; left: 72px; right: 72px; top: 1288px; font-size: 16px; line-height: 1.35; font-weight: 500; color: var(--muted); text-align: center; z-index: 3; }
+
+  .card { background: #fff; border-radius: 30px; box-shadow: 0 26px 50px -30px rgba(31, 22, 51, .6); }
+  .photo { position: absolute; overflow: hidden; border-radius: 40px; box-shadow: 0 30px 60px -30px rgba(31, 22, 51, .7); z-index: 1; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; }
+  .cap { position: absolute; padding: 10px 20px; border-radius: 999px; background: rgba(255, 255, 255, .95); font-size: 25px; font-weight: 800; color: var(--ink); display: flex; align-items: center; gap: 10px; }
+  .ill { position: absolute; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, .85); color: var(--ink-2); font-size: 17px; font-weight: 700; }
+  .ic { display: grid; place-items: center; flex: none; width: 76px; height: 76px; border-radius: 22px; background: var(--wine-50); color: var(--wine); font-size: 40px; }
+
+  /* 1 · Capa */
+  .logo { position: absolute; left: 72px; top: 72px; display: flex; align-items: center; gap: 16px; }
+  .logo svg { width: 62px; height: 62px; color: var(--wine); }
+  .logo .t { display: grid; line-height: 1; }
+  .logo b { font-size: 36px; font-weight: 800; letter-spacing: .08em; }
+  .logo i { margin-top: 8px; font-style: normal; font-size: 18px; font-weight: 800; letter-spacing: .34em; color: var(--wine); }
+  .cover-eyebrow { top: 262px; }
+  .cover-h { position: absolute; left: 72px; top: 318px; font-weight: 800; letter-spacing: -.05em; line-height: .92; }
+  .cover-h .a { display: block; font-size: 96px; }
+  .cover-h .b { display: block; font-size: 150px; margin-top: 8px; }
+  .cover-sub { position: absolute; left: 72px; top: 700px; width: 720px; font-size: 34px; line-height: 1.3; font-weight: 500; color: var(--ink-2); }
+  .cover-sub b { color: var(--ink); font-weight: 800; }
+  .swipe { position: absolute; left: 72px; top: 900px; display: inline-flex; align-items: center; gap: 14px; padding: 20px 30px; border-radius: 999px; background: var(--orange); font-size: 30px; font-weight: 800; color: var(--ink); box-shadow: 0 18px 36px -18px rgba(240, 138, 36, .9); }
+  .swipe svg { width: 40px; height: 40px; }
+  .mcmv { position: absolute; padding: 12px 18px; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px -14px rgba(31, 22, 51, .5); z-index: 2; }
+  .mcmv img { height: 56px; width: auto; }
+
+  /* Boleto do aluguel (atravessa 1 → 2) */
+  .boleto { position: absolute; left: 862px; top: 470px; width: 580px; height: 430px; padding: 34px 38px; transform: rotate(-7deg); z-index: 2; }
+  .boleto .h { display: flex; justify-content: space-between; align-items: center; font-size: 22px; font-weight: 800; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+  .boleto .h span:last-child { color: var(--ink); letter-spacing: .02em; text-transform: none; font-size: 24px; }
+  .boleto .lbl { margin-top: 34px; font-size: 22px; font-weight: 700; color: var(--muted); }
+  .boleto .val { font-size: 76px; font-weight: 800; letter-spacing: -.04em; line-height: 1; margin-top: 6px; }
+  .boleto .bar { margin-top: 34px; height: 76px; background: repeating-linear-gradient(90deg, var(--ink) 0 4px, transparent 4px 9px, var(--ink) 9px 11px, transparent 11px 16px, var(--ink) 16px 22px, transparent 22px 26px); opacity: .85; }
+  .boleto .stamp { position: absolute; right: 40px; top: 262px; padding: 8px 22px; border: 6px solid var(--red); border-radius: 14px; color: var(--red); font-size: 46px; font-weight: 800; letter-spacing: .1em; transform: rotate(14deg); opacity: .9; }
+
+  /* 2 · Aluguel */
+  .calc { position: absolute; left: 470px; top: 560px; width: 540px; }
+  .calc p { font-size: 32px; line-height: 1.3; font-weight: 600; color: var(--ink-2); }
+  .calc .big { margin: 12px 0 10px; font-size: 128px; line-height: .9; font-weight: 800; letter-spacing: -.05em; color: var(--wine); }
+  .calc .big small { font-size: 54px; letter-spacing: -.02em; }
+  .calc .end { font-weight: 800; color: var(--ink); }
+  .calc .ex { margin-top: 14px; font-size: 18px; font-weight: 600; color: var(--muted); }
+
+  /* 3 · MCMV */
+  .benefits { position: absolute; left: 72px; top: 450px; width: 770px; display: grid; gap: 16px; }
+  .benefit { display: flex; align-items: center; gap: 22px; padding: 22px 26px; }
+  .benefit b { display: block; font-size: 36px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+  .benefit div > span { display: block; margin-top: 4px; font-size: 24px; font-weight: 600; color: var(--muted); }
+  .benefit.hi { background: var(--wine); color: #fff; }
+  .benefit.hi div > span { color: rgba(255, 255, 255, .8); }
+  .benefit.hi .ic { background: rgba(255, 255, 255, .16); color: #fff; }
+
+  /* 4 · Lapa */
+  .dist { position: absolute; left: 660px; top: 440px; width: 350px; display: grid; }
+  .dist div { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 12px; padding: 16px 0; border-bottom: 2px dashed var(--line); }
+  .dist span { font-size: 26px; font-weight: 700; line-height: 1.15; }
+  .dist b { display: flex; align-items: center; gap: 8px; font-size: 26px; font-weight: 800; color: var(--wine); white-space: nowrap; }
+  .dist b svg { width: 32px; height: 32px; color: var(--orange-ink); }
+
+  /* 5 · Plantas */
+  .plans { position: absolute; left: 72px; top: 420px; width: 840px; display: grid; gap: 16px; }
+  .plan { display: grid; grid-template-columns: 210px 1fr auto; align-items: center; gap: 22px; padding: 14px 24px 14px 14px; height: 196px; }
+  .plan .pimg { height: 168px; border-radius: 20px; background: #fff; border: 2px solid var(--line); padding: 8px; }
+  .plan .pimg img { width: 100%; height: 100%; object-fit: contain; }
+  .plan .nm { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .plan .dot { width: 18px; height: 18px; border-radius: 4px; transform: rotate(45deg); background: var(--c); }
+  .plan h3 { margin-top: 8px; font-size: 38px; font-weight: 800; letter-spacing: -.02em; line-height: 1.05; }
+  .plan .pr { text-align: right; line-height: 1; }
+  .plan .pr small { display: block; font-size: 18px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .plan .pr b { display: block; margin-top: 6px; font-size: 52px; font-weight: 800; letter-spacing: -.04em; color: var(--wine); }
+  .plan .pr b em { font-style: normal; font-size: 26px; letter-spacing: 0; }
+  .plus { position: absolute; left: 72px; top: 1052px; display: inline-flex; align-items: center; gap: 10px; padding: 10px 20px; border-radius: 999px; background: #fff; font-size: 24px; font-weight: 800; color: var(--ink-2); box-shadow: 0 6px 18px -12px rgba(31, 22, 51, .5); z-index: 3; }
+  .plus svg { color: #3d9a5b; font-size: 28px; }
+
+  /* 7 · Condições */
+  .price { position: absolute; left: 72px; top: 430px; width: 700px; padding: 30px 36px; overflow: hidden; }
+  .price::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 10px; background: var(--joy-short); }
+  .price small { font-size: 24px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .price p { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; font-size: 140px; line-height: .95; font-weight: 800; letter-spacing: -.05em; color: var(--wine); }
+  .price p span { font-size: 50px; letter-spacing: 0; align-self: flex-start; margin-top: 16px; }
+  .price p em { font-style: normal; font-size: 60px; letter-spacing: -.02em; }
+  .checks { position: absolute; left: 72px; top: 720px; width: 720px; display: grid; gap: 18px; }
+  .checks div { display: flex; align-items: center; gap: 18px; font-size: 34px; font-weight: 800; letter-spacing: -.01em; }
+  .checks svg { width: 50px; height: 50px; padding: 11px; border-radius: 50%; background: var(--wine); color: #fff; }
+  .checks div.or svg { background: var(--orange); color: var(--ink); }
+
+  /* 8 · Destino */
+  .dark { color: #fff; }
+  .dark .logo svg { color: #fff; --pin-c: #3b2d93; }
+  .dark .logo i { color: var(--orange-300); }
+  .dark .eyebrow { color: var(--orange-300); }
+  .final-h { position: absolute; left: 520px; top: 300px; width: 500px; font-size: 104px; line-height: .92; letter-spacing: -.05em; font-weight: 800; }
+  .final-h span { color: var(--orange-300); }
+  .final-sub { position: absolute; left: 520px; top: 540px; width: 490px; font-size: 31px; line-height: 1.3; font-weight: 500; color: rgba(255, 255, 255, .86); }
+  .final-sub b { color: #fff; font-weight: 800; }
+  .wa { position: absolute; left: 520px; top: 760px; width: 490px; padding: 26px 30px; border-radius: 30px; background: var(--orange); color: var(--ink); box-shadow: 0 24px 44px -20px rgba(240, 138, 36, .9); }
+  .wa small { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .wa small svg { width: 34px; height: 34px; }
+  .wa b { display: block; margin-top: 6px; font-size: 54px; font-weight: 800; letter-spacing: -.03em; }
+  .bio { position: absolute; left: 520px; top: 952px; width: 490px; text-align: center; font-size: 26px; font-weight: 700; color: rgba(255, 255, 255, .85); }
+  .bio b { color: #fff; }
+  .dark .legal { color: rgba(255, 255, 255, .62); }
+  .dark .station small { color: rgba(255, 255, 255, .65); }
+  .dark .station b { color: #fff; }
+  .dest { position: absolute; top: 1056px; width: 96px; height: 120px; margin-left: -48px; z-index: 4; color: var(--orange); filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .35)); }
+  .dest svg { width: 96px; height: 96px; --pin-c: #3b2d93; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="pin" viewBox="0 0 32 32"><path fill="currentColor" d="M16 1.5A11.5 11.5 0 0 0 4.5 13c0 8 11.5 17.5 11.5 17.5S27.5 21 27.5 13A11.5 11.5 0 0 0 16 1.5z"/><path d="M20.6 9.3a6 6 0 1 0 0 7.4" fill="none" style="stroke: var(--pin-c, #fff)" stroke-width="3.2" stroke-linecap="round"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="coins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9" cy="6.5" rx="5.5" ry="2.5"/><path d="M3.5 6.5v4c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-4"/><path d="M9.5 15.4c.9.4 2.1.6 3.5.6 3 0 5.5-1.1 5.5-2.5v-4c0-1.4-2.5-2.5-5.5-2.5"/><path d="M9.5 15.4V17c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-3.5"/></symbol>
+    <symbol id="wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5.5A1.5 1.5 0 0 0 17.5 4H5a2 2 0 0 0 0 4h14a1 1 0 0 1 1 1v3M3 6v12a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3"/><path d="M21 12v4h-4a2 2 0 0 1 0-4h4z"/></symbol>
+    <symbol id="trend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l6 6 4-4 8 8M21 11v6h-6"/></symbol>
+    <symbol id="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="train" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M9 17l-2.5 4M15 17l2.5 4M8.5 14h.01M15.5 14h.01"/></symbol>
+    <symbol id="car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14v-4.5l-1.8-4.7A2 2 0 0 0 15.3 6.5H8.7a2 2 0 0 0-1.9 1.3L5 12.5V17z"/><path d="M5 12.5h14M6.5 17v2M17.5 17v2"/></symbol>
+    <symbol id="bike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="16" r="3.5"/><circle cx="18.5" cy="16" r="3.5"/><path d="M5.5 16l4-7h6l3 7M9.5 9L12 16h-6.5M14 6h2.5l-1 3"/></symbol>
+    <symbol id="leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8.5 5.5-14 15-14 0 9.5-5.5 15-14 15"/><path d="M5 19c3-4 6-6.5 10-8.5"/></symbol>
+    <symbol id="wa" viewBox="0 0 24 24"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.23 8.24zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28z"/></symbol>
+  </defs>
+</svg>
+
+<div id="canvas">
+  <!-- Fundo contínuo -->
+  <div class="blob" style="left:700px;top:-260px;width:820px;height:820px;background:radial-gradient(closest-side,rgba(183,124,221,.30),transparent)"></div>
+  <div class="blob" style="left:1700px;top:900px;width:900px;height:900px;background:radial-gradient(closest-side,rgba(243,211,107,.32),transparent)"></div>
+  <div class="blob" style="left:2850px;top:-200px;width:800px;height:800px;background:radial-gradient(closest-side,rgba(125,214,164,.26),transparent)"></div>
+  <div class="blob" style="left:3900px;top:850px;width:900px;height:900px;background:radial-gradient(closest-side,rgba(243,154,122,.28),transparent)"></div>
+  <div class="blob" style="left:5000px;top:-260px;width:820px;height:820px;background:radial-gradient(closest-side,rgba(87,183,232,.24),transparent)"></div>
+  <div class="blob" style="left:6100px;top:900px;width:900px;height:900px;background:radial-gradient(closest-side,rgba(183,124,221,.28),transparent)"></div>
+  <div class="blob" style="left:-300px;top:820px;width:800px;height:800px;background:radial-gradient(closest-side,rgba(243,211,107,.30),transparent)"></div>
+  <div id="deep"></div>
+  <div class="blob" style="left:8000px;top:700px;width:900px;height:900px;background:radial-gradient(closest-side,rgba(240,138,36,.30),transparent)"></div>
+
+  <!-- Linha do trem -->
+  <div id="line"></div>
+
+  <!-- 1 · Capa -->
+  <section class="slide" style="left:0">
+    <div class="logo"><svg><use href="#pin"/></svg><div class="t"><b>CAVAZANI</b><i>JOY /// LAPA</i></div></div>
+    <div class="mcmv" style="left:812px;top:70px"><img src="../../assets/img/logo-mcmv.png" alt=""></div>
+    <p class="eyebrow cover-eyebrow">Linha Joy · Sentido Lapa</p>
+    <h1 class="cover-h"><span class="a">Próxima estação:</span><span class="b joy">o seu apê.</span></h1>
+    <p class="cover-sub">Uma viagem rápida <b>do aluguel até as chaves</b>, pelo Minha Casa Minha Vida.</p>
+    <div class="swipe">Arrasta para embarcar <svg><use href="#arrow"/></svg></div>
+    <div class="boleto card">
+      <div class="h"><span>Boleto · Aluguel</span><span>Venc. todo mês</span></div>
+      <p class="lbl">Valor do documento</p>
+      <p class="val">R$ 1.500,00</p>
+      <div class="bar"></div>
+      <span class="stamp">PAGO</span>
+    </div>
+    <span class="node start" style="left:150px"></span>
+    <div class="station" style="left:150px;transform:none;text-align:left;margin-left:-20px"><small>EMBARQUE</small><b>Você, hoje</b></div>
+    <div class="next">Próxima estação <svg><use href="#arrow"/></svg></div>
+  </section>
+
+  <!-- 2 · Aluguel -->
+  <section class="slide" style="left:1080px">
+    <p class="eyebrow">Estação 1 <i>· Aluguel</i></p>
+    <h2>Todo mês o aluguel vai embora.</h2>
+    <div class="calc">
+      <p>Pagando R$ 1.500 por mês, em 5 anos são</p>
+      <p class="big"><small>R$ </small>90 mil</p>
+      <p class="end">que não voltam pra você.</p>
+      <p class="ex">*Exemplo ilustrativo: R$ 1.500 × 60 meses.</p>
+    </div>
+    <span class="node" style="left:540px"></span>
+    <div class="station" style="left:540px"><small>ESTAÇÃO 1</small><b>Aluguel</b></div>
+    <div class="next">Mas tem saída <svg><use href="#arrow"/></svg></div>
+  </section>
+
+  <!-- 3 · Minha Casa Minha Vida -->
+  <section class="slide" style="left:2160px">
+    <p class="eyebrow">Estação 2 <i>· MCMV</i></p>
+    <h2 style="width:800px">O governo ajuda você a sair dessa.</h2>
+    <div class="benefits">
+      <div class="benefit card hi"><span class="ic"><svg><use href="#coins"/></svg></span><div><b>Subsídio de até R$ 55 mil</b><span>para renda familiar de até R$ 5 mil</span></div></div>
+      <div class="benefit card"><span class="ic"><svg><use href="#wallet"/></svg></span><div><b>FGTS na entrada</b><span>o seu Fundo de Garantia ajuda a pagar</span></div></div>
+      <div class="benefit card"><span class="ic"><svg><use href="#trend"/></svg></span><div><b>Juros a partir de 4% a.a.</b><span>bem abaixo do financiamento comum</span></div></div>
+      <div class="benefit card"><span class="ic"><svg><use href="#cal"/></svg></span><div><b>Até 35 anos para pagar</b><span>renda familiar de até R$ 13 mil</span></div></div>
+    </div>
+    <!-- Foto da estação: começa aqui e continua na próxima tela -->
+    <div class="photo" style="left:880px;top:440px;width:820px;height:560px">
+      <img src="../../assets/img/estacao-lapa.jpg" style="object-position:40% 50%" alt="">
+      <span class="cap" style="left:250px;bottom:24px"><svg><use href="#train"/></svg>Estação Lapa · Linha 7-Rubi</span>
+    </div>
+    <span class="node" style="left:540px"></span>
+    <div class="station" style="left:540px"><small>ESTAÇÃO 2</small><b>Minha Casa Minha Vida</b></div>
+    <p class="legal">Condições do MCMV (regras vigentes desde abril/2026) sujeitas à análise de crédito e às regras do programa. Subsídio conforme renda e cidade.</p>
+  </section>
+
+  <!-- 4 · Lapa -->
+  <section class="slide" style="left:3240px">
+    <p class="eyebrow">Estação 3 <i>· Lapa</i></p>
+    <h2>A 5 min de bike da <span class="joy">Estação Lapa.</span></h2>
+    <div class="dist">
+      <div><span>Marginal Tietê</span><b>1 min <svg><use href="#car"/></svg></b></div>
+      <div><span>Tietê Plaza Shopping</span><b>5 min <svg><use href="#car"/></svg></b></div>
+      <div><span>Mercado Municipal da Lapa</span><b>7 min <svg><use href="#bike"/></svg></b></div>
+      <div><span>Hospital Albert Sabin</span><b>8 min <svg><use href="#car"/></svg></b></div>
+      <div><span>Bourbon Shopping</span><b>10 min <svg><use href="#car"/></svg></b></div>
+    </div>
+    <span class="node" style="left:540px"></span>
+    <div class="station" style="left:540px"><small>ESTAÇÃO 3</small><b>Lapa · Água Branca</b></div>
+    <p class="legal">Av. Ermano Marchetti, 1917 · Água Branca · São Paulo/SP. Tempos de deslocamento estimados.</p>
+  </section>
+
+  <!-- 5 · Plantas -->
+  <section class="slide" style="left:4320px">
+    <p class="eyebrow">Estação 4 <i>· Plantas</i></p>
+    <h2>1 ou 2 dorms. Com suíte, se quiser.</h2>
+    <div class="plans">
+      <div class="plan card"><div class="pimg"><img src="../../assets/img/planta-smart.jpg" alt=""></div><div><p class="nm"><span class="dot" style="--c:#f2a774"></span>Smart</p><h3>1 dorm<br>25 m²</h3></div><div class="pr"><small>a partir de</small><b>229<em> mil</em></b></div></div>
+      <div class="plan card"><div class="pimg"><img src="../../assets/img/planta-select.jpg" alt=""></div><div><p class="nm"><span class="dot" style="--c:#c8283a"></span>Select</p><h3>2 dorms<br>34 m²</h3></div><div class="pr"><small>a partir de</small><b>249<em> mil</em></b></div></div>
+      <div class="plan card"><div class="pimg"><img src="../../assets/img/planta-prime.jpg" alt=""></div><div><p class="nm"><span class="dot" style="--c:#8e1b2e"></span>Prime</p><h3>2 dorms + suíte<br>38 m²</h3></div><div class="pr"><small>a partir de</small><b>299<em> mil</em></b></div></div>
+    </div>
+    <!-- Foto da piscina: começa aqui e continua na próxima tela -->
+    <div class="photo" style="left:950px;top:420px;width:590px;height:620px">
+      <img src="../../assets/img/piscina.jpg" style="object-position:30% 50%" alt="">
+      <span class="cap" style="left:160px;bottom:24px">Piscina</span>
+    </div>
+    <span class="node" style="left:540px"></span>
+    <div class="station" style="left:540px"><small>ESTAÇÃO 4</small><b>Plantas</b></div>
+    <p class="legal">Valores em R$, "a partir de", sujeitos a alteração e à disponibilidade. Plantas ilustrativas com sugestão de decoração.</p>
+  </section>
+
+  <!-- 6 · Lazer -->
+  <section class="slide" style="left:5400px">
+    <p class="eyebrow">Estação 5 <i>· Lazer</i></p>
+    <h2>24 itens de lazer. <span class="joy">Clube sem sair de casa.</span></h2>
+    <div class="photo" style="left:480px;top:420px;width:528px;height:300px"><img src="../../assets/img/rooftop.jpg" alt=""><span class="cap" style="left:20px;bottom:20px">Rooftop com redário</span></div>
+    <div class="photo" style="left:480px;top:740px;width:254px;height:300px"><img src="../../assets/img/brinquedoteca.jpg" alt=""><span class="cap" style="left:14px;bottom:16px;font-size:21px;padding:8px 14px">Brinquedoteca</span></div>
+    <div class="photo" style="left:754px;top:740px;width:254px;height:300px"><img src="../../assets/img/cinema.jpg" alt=""><span class="cap" style="left:14px;bottom:16px;font-size:21px;padding:8px 14px">Cinema</span></div>
+    <span class="plus" style="left:72px;top:1052px">Entregue equipado e decorado</span>
+    <span class="node" style="left:540px"></span>
+    <div class="station" style="left:540px"><small>ESTAÇÃO 5</small><b>Lazer</b></div>
+    <div class="next">Agora o melhor <svg><use href="#arrow"/></svg></div>
+  </section>
+
+  <!-- 7 · Condições -->
+  <section class="slide" style="left:6480px">
+    <p class="eyebrow">Estação 6 <i>· Condições</i></p>
+    <h2 style="width:760px">Condições de lançamento para você embarcar.</h2>
+    <div class="price card"><small>a partir de</small><p><span>R$</span>229<em>mil</em></p></div>
+    <div class="checks">
+      <div><svg><use href="#check"/></svg>Escritura grátis</div>
+      <div><svg><use href="#check"/></svg>Use seu FGTS na entrada</div>
+      <div><svg><use href="#check"/></svg>Subsídio de até R$ 55 mil</div>
+      <div class="or"><svg><use href="#check"/></svg>Lançamento oficial: 24/10</div>
+    </div>
+    <!-- Fachada: começa aqui e continua na última tela -->
+    <div class="photo" style="left:850px;top:140px;width:680px;height:900px">
+      <img src="../../assets/img/fachada.jpg" style="object-position:58% 30%" alt="">
+      <span class="ill" style="right:24px;bottom:20px">Perspectiva ilustrada</span>
+    </div>
+    <span class="node" style="left:420px"></span>
+    <div class="station" style="left:420px"><small>ESTAÇÃO 6</small><b>Condições</b></div>
+    <p class="legal" style="right:300px">Preço de referência sujeito a alteração e à disponibilidade. Benefícios do MCMV sujeitos à análise de crédito.</p>
+  </section>
+
+  <!-- 8 · Destino -->
+  <section class="slide dark" style="left:7560px">
+    <div class="logo" style="left:520px"><svg><use href="#pin"/></svg><div class="t"><b>CAVAZANI</b><i>JOY /// LAPA</i></div></div>
+    <p class="eyebrow" style="left:520px;top:220px">Destino final</p>
+    <h2 class="final-h">Seu <span>Joy Lapa.</span></h2>
+    <p class="final-sub">Entre na <b>lista VIP</b> e receba a tabela de lançamento <b>antes de todo mundo.</b></p>
+    <div class="wa"><small><svg><use href="#wa"/></svg>Chama no WhatsApp</small><b>(11) 94591-3535</b></div>
+    <p class="bio">ou toque no <b>link da bio</b></p>
+    <div class="dest" style="left:760px"><svg><use href="#pin"/></svg></div>
+    <div class="station" style="left:760px"><small>DESTINO</small><b>Seu apê</b></div>
+    <p class="legal" data-legal>Imagens ilustrativas. Preços de referência sujeitos a alteração. MCMV sujeito à análise de crédito.</p>
+  </section>
+</div>
+
+<script>
+  /* ============ EDITE AQUI ============ */
+  const CFG = {
+    corretor: 'Gabriel Guerra · CRECI 267059-F',
+    registro: '', // ex.: 'R.I. nº 12345 do 10º CRI de SP'
+  };
+  /* ==================================== */
+  const legal = document.querySelector('[data-legal]');
+  legal.textContent = [legal.textContent, CFG.registro, CFG.corretor].filter(Boolean).join(' ');
+
+  // ?s=1..8 mostra uma tela; ?full=1 mostra o panorama inteiro
+  const q = new URLSearchParams(location.search);
+  if (q.get('full')) {
+    document.body.classList.add('full');
+  } else {
+    const s = Math.min(8, Math.max(1, Number(q.get('s')) || 1));
+    document.getElementById('canvas').style.left = `-${(s - 1) * 1080}px`;
+  }
+</script>
+</body>
+</html>

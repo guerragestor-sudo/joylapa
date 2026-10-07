@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Criativo Joy Lapa</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=block" rel="stylesheet">
+<style>
+  :root {
+    --wine: #8e1b2e; --wine-700: #6f1323; --wine-50: #fbeef0; --red: #c8283a;
+    --violet: #5a2386; --orange: #f08a24; --orange-300: #ffb45c; --orange-50: #fff2e4; --orange-ink: #a2500b;
+    --ink: #1f1633; --ink-2: #3f3753; --muted: #645d78; --bg: #fbf8f4; --tint: #f6f1f8; --line: #e8e1ec;
+    --joy: linear-gradient(100deg, #57b7e8 0%, #7dd6a4 22%, #f3d36b 45%, #f39a7a 68%, #b77cdd 100%);
+    --joy-text: linear-gradient(95deg, #8e1b2e 0%, #d23c35 50%, #f08a24 100%);
+    --deep: linear-gradient(150deg, #5a2386 0%, #3b2d93 55%, #273c9f 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: var(--H); overflow: hidden; }
+  body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  img { display: block; }
+  svg { width: 1em; height: 1em; flex: none; }
+
+  .art {
+    position: relative; width: 1080px; height: var(--H); overflow: hidden;
+    display: flex; flex-direction: column; gap: 34px;
+    padding: var(--pt) 72px var(--pb);
+    background:
+      radial-gradient(60% 40% at 100% 0%, rgba(183, 124, 221, .28), transparent 70%),
+      radial-gradient(55% 35% at 0% 100%, rgba(243, 211, 107, .30), transparent 70%),
+      radial-gradient(40% 30% at 0% 30%, rgba(125, 214, 164, .18), transparent 70%),
+      var(--bg);
+  }
+  .f-feed { --H: 1350px; --pt: 64px; --pb: 56px; }
+  .f-story { --H: 1920px; --pt: 200px; --pb: 300px; gap: 44px; }
+  .art::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 14px; background: var(--joy); }
+  .dark { background: var(--deep); color: #fff; }
+  .dark::before {
+    content: ""; position: absolute; right: -240px; bottom: -200px; width: 900px; height: 900px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(240, 138, 36, .28), transparent); pointer-events: none;
+  }
+  .art > * { position: relative; z-index: 1; }
+
+  /* Marca */
+  .brand { display: flex; align-items: center; justify-content: space-between; }
+  .logo { display: flex; align-items: center; gap: 16px; }
+  .logo svg { width: 64px; height: 64px; color: var(--wine); }
+  .logo .t { display: grid; line-height: 1; }
+  .logo b { font-size: 38px; font-weight: 800; letter-spacing: .08em; }
+  .logo i { margin-top: 8px; font-style: normal; font-size: 19px; font-weight: 800; letter-spacing: .34em; color: var(--wine); }
+  .dark .logo svg { color: #fff; --pin-c: #3b2d93; }
+  .dark .logo i { color: var(--orange-300); }
+  .mcmv { height: 82px; padding: 12px 18px; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px -14px rgba(31, 22, 51, .5); }
+  .mcmv img { height: 58px; width: auto; }
+
+  /* Tipografia */
+  .eyebrow { display: inline-flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--wine); }
+  .eyebrow::before { content: ""; width: 48px; height: 8px; border-radius: 8px; background: var(--joy); }
+  .dark .eyebrow { color: var(--orange-300); }
+  h1 { font-size: 92px; line-height: .98; letter-spacing: -.045em; font-weight: 800; }
+  h1.md { font-size: 78px; }
+  h1.sm { font-size: 68px; }
+  .joy { background: var(--joy-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .orange { color: var(--orange-300); }
+  .lead { font-size: 34px; line-height: 1.3; font-weight: 500; color: var(--ink-2); letter-spacing: -.01em; }
+  .lead b { color: var(--ink); font-weight: 800; }
+  .dark .lead { color: rgba(255, 255, 255, .85); }
+  .dark .lead b { color: #fff; }
+  .stack { display: grid; gap: 22px; }
+
+  /* Chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 14px; }
+  .chip { display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; border-radius: 999px; background: #fff; font-size: 27px; font-weight: 800; color: var(--ink-2); box-shadow: 0 6px 18px -12px rgba(31, 22, 51, .5); }
+  .chip svg { font-size: 30px; color: var(--violet); }
+  .chip.wine { background: var(--wine-50); color: var(--wine); }
+  .chip.wine svg { color: var(--wine); }
+  .chip.orange { background: var(--orange); color: var(--ink); }
+  .chip.orange svg { color: var(--ink); }
+  .dark .chip { background: rgba(255, 255, 255, .12); color: #fff; box-shadow: none; border: 2px solid rgba(255, 255, 255, .25); }
+  .dark .chip svg { color: var(--orange-300); }
+  .dark .chip.orange { background: var(--orange); color: var(--ink); border-color: var(--orange); }
+  .dark .chip.orange svg { color: var(--ink); }
+
+  /* Preço */
+  .price { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px 34px; border-radius: 30px; background: #fff; box-shadow: 0 24px 50px -28px rgba(31, 22, 51, .6); position: relative; overflow: hidden; }
+  .price::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 9px; background: var(--joy); }
+  .price .from { font-size: 24px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .price .val { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; font-size: 96px; line-height: 1; font-weight: 800; letter-spacing: -.045em; color: var(--wine); }
+  .price .val small { font-size: 38px; letter-spacing: 0; align-self: flex-start; margin-top: 12px; }
+  .price .val em { font-style: normal; font-size: 42px; letter-spacing: -.01em; }
+  .price .side { display: grid; gap: 10px; justify-items: end; text-align: right; }
+  .tag { display: inline-block; padding: 10px 18px; border-radius: 999px; font-size: 24px; font-weight: 800; background: var(--orange-50); color: var(--orange-ink); }
+  .tag.wine { background: var(--wine-50); color: var(--wine); }
+
+  /* Imagem com moldura Joy */
+  .frame { flex: 1; min-height: 0; padding: 9px; border-radius: 44px; background: var(--joy); box-shadow: 0 30px 60px -34px rgba(31, 22, 51, .7); }
+  .frame img { width: 100%; height: 100%; object-fit: cover; border-radius: 36px; }
+  .photo { flex: 1; min-height: 0; border-radius: 40px; overflow: hidden; position: relative; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .6); }
+  .photo img { width: 100%; height: 100%; object-fit: cover; }
+  .ill { position: absolute; right: 18px; bottom: 16px; padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, .85); color: var(--ink-2); font-size: 18px; font-weight: 700; }
+  .cap { position: absolute; left: 20px; bottom: 20px; padding: 10px 20px; border-radius: 999px; background: rgba(255, 255, 255, .95); font-size: 26px; font-weight: 800; color: var(--ink); }
+
+  /* Planta */
+  .planhead { display: flex; align-items: center; gap: 30px; }
+  .badge { position: relative; isolation: isolate; flex: none; display: grid; place-items: center; align-content: center; width: 200px; height: 200px; color: #fff; text-align: center; line-height: 1; }
+  .badge::before { content: ""; position: absolute; inset: 29px; z-index: -1; transform: rotate(45deg); border-radius: 18px; background: var(--bb); box-shadow: inset 0 0 0 7px var(--bb), inset 0 0 0 9px rgba(255, 255, 255, .5), 0 18px 30px -16px rgba(0, 0, 0, .55); }
+  .badge span { font-size: 15px; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; opacity: .85; }
+  .badge b { font-size: 34px; font-weight: 800; margin-top: 6px; text-transform: uppercase; }
+  .badge i { margin-top: 9px; padding: 5px 14px; font-style: normal; font-size: 19px; font-weight: 800; border-radius: 5px; background: var(--br); color: #fff; }
+  .b-smart { --bb: #f2a774; --br: var(--red); color: var(--wine-700); }
+  .b-select { --bb: var(--red); --br: var(--wine-700); }
+  .b-prime { --bb: var(--wine); --br: #9b8169; }
+  .planhead h1 { font-size: 74px; }
+  .planhead .lead { margin-top: 10px; }
+  .plancard { flex: 1; min-height: 0; position: relative; border-radius: 40px; background: #fff; box-shadow: 0 30px 60px -34px rgba(31, 22, 51, .6); }
+  .plancard > img, .pimg img { position: absolute; inset: 18px; width: calc(100% - 36px); height: calc(100% - 36px); object-fit: contain; }
+  .checks { display: flex; flex-wrap: wrap; gap: 12px 26px; }
+  .checks span { display: inline-flex; align-items: center; gap: 12px; font-size: 28px; font-weight: 700; color: var(--ink-2); line-height: 1.2; }
+  .planrow { flex: 1; min-height: 0; display: grid; gap: 26px; }
+  .f-feed .planrow { grid-template-columns: 1.65fr 1fr; }
+  .f-story .planrow { grid-template-rows: 1fr auto; }
+  .f-feed .planrow .checks { flex-direction: column; justify-content: center; gap: 26px; }
+  .f-feed .planrow .checks span { font-size: 30px; }
+  .checks svg { width: 38px; height: 38px; padding: 8px; border-radius: 50%; background: var(--wine-50); color: var(--wine); }
+
+  /* Garden */
+  .duo { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .f-story .duo .plancard p { font-size: 26px; }
+  .duo .plancard { display: grid; grid-template-rows: 1fr auto; gap: 10px; padding: 0 0 22px; }
+  .pimg { position: relative; min-height: 0; }
+  .duo .plancard p { font-size: 25px; font-weight: 700; color: var(--ink-2); text-align: center; line-height: 1.25; }
+  .duo .plancard p b { display: block; font-size: 30px; color: var(--ink); }
+
+  /* MCMV: faixas */
+  .faixas { display: grid; gap: 14px; }
+  .fx { display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 22px; padding: 22px 28px; border-radius: 26px; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .18); }
+  .fx b { font-size: 34px; font-weight: 800; color: var(--orange-300); }
+  .fx div { display: grid; gap: 4px; }
+  .fx strong { font-size: 34px; font-weight: 800; letter-spacing: -.01em; }
+  .fx span { font-size: 25px; font-weight: 600; color: rgba(255, 255, 255, .78); }
+  .fx.hi { background: rgba(240, 138, 36, .18); border-color: var(--orange); }
+  .f-feed .faixas { gap: 10px; }
+  .f-feed .fx { padding: 13px 26px; }
+  .f-feed .fx strong { font-size: 31px; }
+  .f-feed .fx span { font-size: 23px; }
+  .f-feed .mcmvart h1 { font-size: 62px; }
+  .f-feed .mcmvart .chip { padding: 11px 20px; font-size: 25px; }
+  .f-story .mcmvart h1 { font-size: 80px; }
+  .f-story .faixas { gap: 18px; }
+  .f-story .fx { padding: 30px 30px; }
+  .f-story .fx strong { font-size: 38px; }
+  .f-story .fx span { font-size: 27px; }
+  .note { font-size: 21px; font-weight: 600; color: rgba(255, 255, 255, .65); }
+  .spacer { flex: 1; min-height: 0; }
+
+  /* Localização */
+  .dist { display: grid; }
+  .dist div { display: grid; grid-template-columns: 1fr auto 44px; align-items: center; gap: 18px; padding: 15px 0; border-bottom: 2px dashed rgba(255, 255, 255, .25); font-size: 30px; font-weight: 700; }
+  .dist b { color: var(--orange-300); font-weight: 800; }
+  .dist svg { width: 40px; height: 40px; color: var(--orange-300); }
+  .dist small { font-size: 22px; color: rgba(255, 255, 255, .6); font-weight: 700; margin-left: 8px; }
+  .addr { display: flex; align-items: center; gap: 16px; font-size: 26px; font-weight: 700; color: rgba(255, 255, 255, .85); }
+  .addr svg { width: 44px; height: 44px; color: var(--orange-300); --pin-c: #3b2d93; }
+
+  /* Lazer */
+  .grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid .photo { border-radius: 30px; }
+  .f-feed .grid { grid-template-rows: 1fr 1fr; }
+  .f-story .grid { grid-template-rows: 1fr 1fr 1fr; }
+  .f-feed .x-story { display: none !important; }
+  .f-story .x-feed { display: none !important; }
+
+  /* Lançamento */
+  .date { display: flex; align-items: flex-end; gap: 22px; }
+  .date .big { font-size: 230px; line-height: .8; font-weight: 800; letter-spacing: -.06em; }
+  .date .mo { display: grid; gap: 8px; padding-bottom: 12px; font-size: 40px; font-weight: 800; line-height: 1; text-transform: uppercase; letter-spacing: .04em; }
+  .date .mo small { font-size: 26px; color: var(--orange-300); letter-spacing: .12em; }
+  .split { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: stretch; }
+  .split .stack { align-content: center; }
+  .f-story .split { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+
+  /* Indique */
+  .orangebg { background: linear-gradient(150deg, #ffb45c 0%, #f08a24 55%, #e0661c 100%); }
+  .orangebg .eyebrow { color: var(--ink); }
+  .orangebg .logo i { color: var(--wine-700); }
+  .money { font-size: 200px; line-height: .85; font-weight: 800; letter-spacing: -.06em; color: var(--ink); }
+  .money small { font-size: 80px; letter-spacing: -.02em; }
+  .orangebg .lead { color: var(--ink); }
+
+  /* Rodapé */
+  .foot { display: grid; gap: 18px; }
+  .cta { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 30px 40px; border-radius: 999px; background: var(--wine); color: #fff; font-size: 38px; font-weight: 800; letter-spacing: -.01em; box-shadow: 0 20px 40px -22px rgba(142, 27, 46, .9); }
+  .cta svg { width: 46px; height: 46px; }
+  .dark .cta { background: var(--orange); color: var(--ink); box-shadow: 0 20px 40px -22px rgba(240, 138, 36, .9); }
+  .orangebg .cta { background: var(--ink); color: #fff; }
+  .legal { font-size: 17px; line-height: 1.4; font-weight: 500; color: var(--muted); text-align: center; }
+  .dark .legal { color: rgba(255, 255, 255, .6); }
+  .orangebg .legal { color: rgba(31, 22, 51, .75); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="pin" viewBox="0 0 32 32"><path fill="currentColor" d="M16 1.5A11.5 11.5 0 0 0 4.5 13c0 8 11.5 17.5 11.5 17.5S27.5 21 27.5 13A11.5 11.5 0 0 0 16 1.5z"/><path d="M20.6 9.3a6 6 0 1 0 0 7.4" fill="none" style="stroke: var(--pin-c, #fff)" stroke-width="3.2" stroke-linecap="round"/></symbol>
+    <symbol id="wa" viewBox="0 0 24 24"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.23 8.24zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28z"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l2 2 4-4"/></symbol>
+    <symbol id="wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5.5A1.5 1.5 0 0 0 17.5 4H5a2 2 0 0 0 0 4h14a1 1 0 0 1 1 1v3M3 6v12a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3"/><path d="M21 12v4h-4a2 2 0 0 1 0-4h4z"/></symbol>
+    <symbol id="coins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9" cy="6.5" rx="5.5" ry="2.5"/><path d="M3.5 6.5v4c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-4"/><path d="M9.5 15.4c.9.4 2.1.6 3.5.6 3 0 5.5-1.1 5.5-2.5v-4c0-1.4-2.5-2.5-5.5-2.5"/><path d="M9.5 15.4V17c0 1.4 2.5 2.5 5.5 2.5s5.5-1.1 5.5-2.5v-3.5"/></symbol>
+    <symbol id="train" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M9 17l-2.5 4M15 17l2.5 4M8.5 14h.01M15.5 14h.01"/></symbol>
+    <symbol id="car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14v-4.5l-1.8-4.7A2 2 0 0 0 15.3 6.5H8.7a2 2 0 0 0-1.9 1.3L5 12.5V17z"/><path d="M5 12.5h14M6.5 17v2M17.5 17v2"/></symbol>
+    <symbol id="bike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="16" r="3.5"/><circle cx="18.5" cy="16" r="3.5"/><path d="M5.5 16l4-7h6l3 7M9.5 9L12 16h-6.5M14 6h2.5l-1 3"/></symbol>
+    <symbol id="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8.5 5.5-14 15-14 0 9.5-5.5 15-14 15"/><path d="M5 19c3-4 6-6.5 10-8.5"/></symbol>
+    <symbol id="gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12M12 8S10.5 3.5 8 4.5 9 8 12 8zM12 8s1.5-4.5 4-3.5S15 8 12 8z"/></symbol>
+  </defs>
+</svg>
+
+<div id="root"></div>
+
+<script>
+  /* ============ EDITE AQUI ============ */
+  const CFG = {
+    corretor: 'Gabriel Guerra · CRECI 267059-F',
+    // Quando sair o registro da incorporação, coloque aqui. Ex.: 'R.I. nº 12345 do 10º Cartório de Registro de Imóveis de SP'
+    registro: '',
+  };
+  /* ==================================== */
+
+  const IMG = '../../assets/img/';
+  const ic = (id) => `<svg><use href="#${id}"/></svg>`;
+  const brand = () => `
+    <header class="brand">
+      <div class="logo">${ic('pin')}<div class="t"><b>CAVAZANI</b><i>JOY /// LAPA</i></div></div>
+      <div class="mcmv"><img src="${IMG}logo-mcmv.png" alt=""></div>
+    </header>`;
+  const legal = (extra = '') => {
+    const base = 'Imagens ilustrativas. Preços de referência sujeitos a alteração e à disponibilidade de unidades. Condições do Minha Casa Minha Vida sujeitas à análise de crédito e às regras do programa.';
+    return [extra, base, CFG.registro, CFG.corretor].filter(Boolean).join(' ');
+  };
+  const foot = (cta, extra) => `
+    <footer class="foot">
+      <div class="cta">${ic('wa')}${cta}</div>
+      <p class="legal">${legal(extra)}</p>
+    </footer>`;
+  const price = (valor, mil = false, tags = ['Escritura grátis']) => `
+    <div class="price">
+      <div>
+        <p class="from">a partir de</p>
+        <p class="val"><small>R$</small>${valor}${mil ? '<em>mil</em>' : ''}</p>
+      </div>
+      <div class="side">${tags.map((t, i) => `<span class="tag ${i ? 'wine' : ''}">${t}</span>`).join('')}</div>
+    </div>`;
+  const PLANT_NOTE = 'Planta ilustrativa com sugestão de decoração; móveis e utensílios não fazem parte do contrato.';
+
+  const planta = ({ cls, nome, m2, titulo, sub, img, valor, checks, cta }) => `
+    <div class="art">
+      ${brand()}
+      <div class="planhead">
+        <div class="badge ${cls}"><span>Planta</span><b>${nome}</b><i>${m2}</i></div>
+        <div><h1>${titulo}</h1><p class="lead">${sub}</p></div>
+      </div>
+      <div class="planrow">
+        <div class="plancard"><img src="${IMG}${img}" alt=""></div>
+        <div class="checks">${checks.map((c) => `<span>${ic('check')}${c}</span>`).join('')}</div>
+      </div>
+      ${price(valor, false, ['Escritura grátis', 'Use seu FGTS'])}
+      ${foot(cta, PLANT_NOTE)}
+    </div>`;
+
+  const C = {
+    oferta: () => `
+      <div class="art">
+        ${brand()}
+        <div class="frame"><img src="${IMG}hero.jpg" style="object-position: 44% 22%" alt=""></div>
+        <div class="stack">
+          <span class="eyebrow">Minha Casa Minha Vida na Lapa</span>
+          <h1>Saia do aluguel.<br><span class="joy">Viva o Joy.</span></h1>
+          <p class="lead">Apê de <b>1 e 2 dorms com opção de suíte</b>, a 5 min de bike da Estação Lapa.</p>
+        </div>
+        ${price('229', true, ['Escritura grátis', 'Use seu FGTS'])}
+        ${foot('Simule grátis pelo WhatsApp')}
+      </div>`,
+
+    smart: () => planta({ cls: 'b-smart', nome: 'Smart', m2: '25 m²', titulo: '1 dormitório', sub: 'O primeiro apê perfeito para morar sozinho ou a dois.', img: 'planta-smart.jpg', valor: '229.000', checks: ['Terraço', 'Cozinha integrada', 'Previsão para ar-condicionado'], cta: 'Quero simular o Smart' }),
+    select: () => planta({ cls: 'b-select', nome: 'Select', m2: '34 m²', titulo: '2 dormitórios', sub: 'Espaço para a família, perto do trem.', img: 'planta-select.jpg', valor: '249.000', checks: ['Sala e cozinha integradas', 'Área de serviço', 'Gás encanado'], cta: 'Quero simular o Select' }),
+    prime: () => planta({ cls: 'b-prime', nome: 'Prime', m2: '38 m²', titulo: '2 dorms com suíte', sub: 'O mais completo: suíte só sua e 2 banheiros.', img: 'planta-prime.jpg', valor: '299.000', checks: ['Suíte', '2 banheiros', 'Unidade de ponta'], cta: 'Quero simular o Prime' }),
+
+    garden: () => `
+      <div class="art">
+        ${brand()}
+        <div class="stack">
+          <span class="eyebrow">Planta Garden</span>
+          <h1 class="md">Apê com <span class="joy">quintal</span> na Lapa.</h1>
+          <p class="lead">Churrasco em família, horta e espaço para o pet. <b>Unidades limitadas.</b></p>
+        </div>
+        <div class="duo">
+          <div class="plancard"><div class="pimg"><img src="${IMG}planta-select-garden.jpg" alt=""></div><p><b>Select Garden</b>2 dorms · aprox. 59 m²</p></div>
+          <div class="plancard"><div class="pimg"><img src="${IMG}planta-prime-garden.jpg" alt=""></div><p><b>Prime Garden</b>2 dorms com suíte · aprox. 97 m²</p></div>
+        </div>
+        <div class="chips"><span class="chip wine">${ic('doc')}Escritura grátis</span><span class="chip">${ic('leaf')}Área descoberta privativa</span><span class="chip orange">Consulte valores</span></div>
+        ${foot('Quero saber do Garden', 'Metragens aproximadas, somando área coberta e descoberta. ' + PLANT_NOTE)}
+      </div>`,
+
+    mcmv: () => `
+      <div class="art dark mcmvart">
+        ${brand()}
+        <div class="stack">
+          <span class="eyebrow">Minha Casa Minha Vida</span>
+          <h1 class="sm">Subsídio de até <span class="orange">R$ 55 mil</span> para sair do aluguel.</h1>
+        </div>
+        <div class="faixas">
+          <div class="fx hi"><b>Faixa 1</b><div><strong>Renda até R$ 3.200</strong><span>Subsídio de até R$ 55 mil · juros a partir de 4% a.a.</span></div></div>
+          <div class="fx hi"><b>Faixa 2</b><div><strong>Renda até R$ 5.000</strong><span>Subsídio de até R$ 55 mil · juros reduzidos</span></div></div>
+          <div class="fx"><b>Faixa 3</b><div><strong>Renda até R$ 9.600</strong><span>Juros abaixo do mercado</span></div></div>
+          <div class="fx"><b>Faixa 4</b><div><strong>Renda até R$ 13.000</strong><span>Juros abaixo do mercado</span></div></div>
+        </div>
+        <div class="chips"><span class="chip">${ic('wallet')}FGTS na entrada</span><span class="chip">${ic('cal')}Até 420 meses</span><span class="chip orange">${ic('doc')}Escritura grátis</span></div>
+        <p class="note">Renda familiar bruta mensal. Regras vigentes desde abril/2026. Subsídio conforme renda e cidade.</p>
+        <div class="spacer"></div>
+        ${foot('Descubra sua faixa no WhatsApp')}
+      </div>`,
+
+    localizacao: () => `
+      <div class="art dark">
+        ${brand()}
+        <div class="photo"><img src="${IMG}estacao-lapa.jpg" alt=""><span class="cap">${ic('train')} Estação Lapa · Linha 7-Rubi</span></div>
+        <div class="stack">
+          <span class="eyebrow">Localização</span>
+          <h1 class="md">A <span class="orange">5 min de bike</span> da Estação Lapa.</h1>
+        </div>
+        <div class="dist">
+          <div><span>Marginal Tietê</span><b>1 min</b>${ic('car')}</div>
+          <div><span>Tietê Plaza Shopping</span><b>5 min</b>${ic('car')}</div>
+          <div><span>Mercado Municipal da Lapa</span><b>7 min</b>${ic('bike')}</div>
+          <div><span>Hospital Albert Sabin</span><b>8 min</b>${ic('car')}</div>
+          <div class="x-story"><span>Bourbon Shopping</span><b>10 min</b>${ic('car')}</div>
+        </div>
+        <p class="addr">${ic('pin')} Av. Ermano Marchetti, 1917 · Água Branca</p>
+        ${foot('Agende sua visita pelo WhatsApp', 'Tempos de deslocamento estimados.')}
+      </div>`,
+
+    lazer: () => `
+      <div class="art">
+        ${brand()}
+        <div class="stack">
+          <span class="eyebrow">Lazer completo</span>
+          <h1 class="md"><span class="joy">24 itens</span> de lazer. Clube sem sair de casa.</h1>
+        </div>
+        <div class="grid">
+          <div class="photo"><img src="${IMG}piscina.jpg" alt=""><span class="cap">Piscina</span></div>
+          <div class="photo"><img src="${IMG}rooftop.jpg" alt=""><span class="cap">Rooftop</span></div>
+          <div class="photo"><img src="${IMG}brinquedoteca.jpg" alt=""><span class="cap">Brinquedoteca</span></div>
+          <div class="photo"><img src="${IMG}academia.jpg" alt=""><span class="cap">Academia</span></div>
+          <div class="photo x-story"><img src="${IMG}playground.jpg" alt=""><span class="cap">Playground</span></div>
+          <div class="photo x-story"><img src="${IMG}cinema.jpg" alt=""><span class="cap">Cinema</span></div>
+        </div>
+        <div class="chips"><span class="chip wine">${ic('check')}Entregue equipado e decorado</span><span class="chip">a partir de R$ 229 mil</span></div>
+        ${foot('Quero conhecer o Joy Lapa', 'Áreas comuns conforme memorial descritivo.')}
+      </div>`,
+
+    lancamento: () => `
+      <div class="art dark">
+        ${brand()}
+        <div class="split">
+          <div class="stack">
+            <span class="eyebrow">Lançamento oficial</span>
+            <div class="date"><span class="big">24</span><span class="mo"><small>de</small>outubro</span></div>
+            <p class="lead">Entre na <b>lista VIP</b> e receba a tabela de lançamento <b>antes de todo mundo.</b></p>
+          </div>
+          <div class="photo"><img src="${IMG}fachada.jpg" style="object-position: 50% 25%" alt=""><span class="ill">Perspectiva ilustrada</span></div>
+        </div>
+        <div class="chips"><span class="chip orange">a partir de R$ 229 mil</span><span class="chip">${ic('doc')}Escritura grátis</span><span class="chip">${ic('wallet')}Use seu FGTS</span></div>
+        ${foot('Entrar na lista VIP')}
+      </div>`,
+
+    indique: () => `
+      <div class="art orangebg">
+        ${brand()}
+        <div class="stack">
+          <span class="eyebrow">Indique e ganhe</span>
+          <p class="money"><small>R$</small> 1.000</p>
+          <h1 class="sm">em gift card para você.</h1>
+          <p class="lead">Indicou um amigo e ele comprou um Cavazani? <b>Você ganha.</b> Simples assim.</p>
+        </div>
+        <div class="photo"><img src="${IMG}familia-pet.jpg" style="object-position: 20% 50%" alt=""></div>
+        ${foot('Indicar um amigo pelo WhatsApp', 'Benefício conforme regulamento da Cavazani.')}
+      </div>`,
+  };
+
+  const q = new URLSearchParams(location.search);
+  const id = q.get('c') || 'oferta';
+  const format = q.get('f') === 'story' ? 'story' : 'feed';
+  document.getElementById('root').innerHTML = (C[id] || C.oferta)();
+  document.querySelector('.art').classList.add(`f-${format}`);
+  document.documentElement.style.setProperty('--H', format === 'story' ? '1920px' : '1350px');
+</script>
+</body>
+</html>

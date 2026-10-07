@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Figurinhas 3D Joy Lapa</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1400px; height: 1400px; overflow: hidden; background: transparent; }
+  canvas { display: block;
+    /* contorno branco de figurinha + sombra suave */
+    filter:
+      drop-shadow(6px 0 0 #fff) drop-shadow(-6px 0 0 #fff) drop-shadow(0 6px 0 #fff) drop-shadow(0 -6px 0 #fff)
+      drop-shadow(4px 4px 0 #fff) drop-shadow(-4px -4px 0 #fff) drop-shadow(4px -4px 0 #fff) drop-shadow(-4px 4px 0 #fff)
+      drop-shadow(0 18px 22px rgba(31, 22, 51, .32));
+  }
+  body.sem-contorno canvas { filter: drop-shadow(0 18px 22px rgba(31, 22, 51, .32)); }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
+import { Font } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+
+const SIZE = 1400;
+const id = new URLSearchParams(location.search).get('s') || 'pin';
+
+await document.fonts.load('800 100px "Plus Jakarta Sans"');
+await document.fonts.load('700 100px "Plus Jakarta Sans"');
+
+/* ---------- Renderizador ---------- */
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(SIZE, SIZE);
+renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+
+const keyLight = new THREE.DirectionalLight(0xffffff, 2.9);
+keyLight.position.set(-5, 8, 7);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(4096, 4096);
+keyLight.shadow.camera.left = keyLight.shadow.camera.bottom = -7;
+keyLight.shadow.camera.right = keyLight.shadow.camera.top = 7;
+keyLight.shadow.bias = -0.0004;
+keyLight.shadow.normalBias = 0.02;
+keyLight.shadow.radius = 5;
+scene.add(keyLight);
+const rim = new THREE.DirectionalLight(0xffe4cc, 1.3);
+rim.position.set(6, 3, -5);
+scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7aa8, 0.45));
+
+/* ---------- Materiais ---------- */
+const C = {
+  wine: 0x8e1b2e, wineDark: 0x6f1323, red: 0xc8283a, orange: 0xf08a24, orangeLight: 0xffb45c,
+  ink: 0x1f1633, cream: 0xfaf1e4, white: 0xffffff, blue: 0x57b7e8, green: 0x7dd6a4, yellow: 0xf3d36b,
+  coral: 0xf39a7a, purple: 0xb77cdd, grass: 0x6cc48f, terracotta: 0xb4643f, wood: 0x9a6b4a,
+};
+const toy = (color, o = {}) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.36, metalness: 0, clearcoat: 0.85, clearcoatRoughness: 0.22, ...o });
+const gold = (o = {}) => new THREE.MeshPhysicalMaterial({ color: 0xf6bf55, metalness: 1, roughness: 0.2, clearcoat: 0.4, envMapIntensity: 2.2, ...o });
+const metal = (o = {}) => new THREE.MeshPhysicalMaterial({ color: 0xdcd8e4, metalness: 1, roughness: 0.28, envMapIntensity: 1.8, ...o });
+const glass = (color = 0x2a2f4a, o = {}) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.06, metalness: 0.3, clearcoat: 1, clearcoatRoughness: 0.05, ...o });
+const glow = (color) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.6 });
+
+/* ---------- Utilitários ---------- */
+const JOY = ['#3fa9e6', '#4fcf8f', '#f7c53a', '#f2795a', '#a95fd8'].map((c) => new THREE.Color(c));
+const joyAt = (t) => {
+  t = Math.min(1, Math.max(0, t)) * (JOY.length - 1);
+  const i = Math.min(JOY.length - 2, Math.floor(t));
+  return JOY[i].clone().lerp(JOY[i + 1], t - i);
+};
+function paintJoy(geo) {
+  geo.computeBoundingBox();
+  const b = geo.boundingBox, pos = geo.attributes.position, cols = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const x = (pos.getX(i) - b.min.x) / (b.max.x - b.min.x);
+    const y = (pos.getY(i) - b.min.y) / (b.max.y - b.min.y);
+    const c = joyAt(x * 0.55 + (1 - y) * 0.45);
+    cols.set([c.r, c.g, c.b], i * 3);
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+}
+const svgShapes = (d) => new SVGLoader().parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${d}"/></svg>`).paths.flatMap((p) => SVGLoader.createShapes(p));
+const PIN_D = 'M16 1.5A11.5 11.5 0 0 0 4.5 13c0 8 11.5 17.5 11.5 17.5S27.5 21 27.5 13A11.5 11.5 0 0 0 16 1.5z';
+const SPARK_D = 'M12 0c.7 5.8 3.5 9.3 12 12-8.5 2.7-11.3 6.2-12 12-.7-5.8-3.5-9.3-12-12C8.5 9.3 11.3 5.8 12 0z';
+
+function roundRect(x0, y0, x1, y1, r) {
+  const s = new THREE.Shape();
+  s.moveTo(x0 + r, y0); s.lineTo(x1 - r, y0); s.quadraticCurveTo(x1, y0, x1, y0 + r);
+  s.lineTo(x1, y1 - r); s.quadraticCurveTo(x1, y1, x1 - r, y1); s.lineTo(x0 + r, y1);
+  s.quadraticCurveTo(x0, y1, x0, y1 - r); s.lineTo(x0, y0 + r); s.quadraticCurveTo(x0, y0, x0 + r, y0);
+  return s;
+}
+const extrude = (shapes, depth, bevel, seg = 8) => {
+  const g = new THREE.ExtrudeGeometry(shapes, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * 0.85, bevelSegments: seg, curveSegments: 48 });
+  g.center();
+  return g;
+};
+const mesh = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; return m; };
+const rbox = (w, h, d, r, mat) => mesh(new RoundedBoxGeometry(w, h, d, 6, r), mat);
+
+function canvasTex(w, h, draw) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  draw(g, w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+const font = (px, w = 800) => `${w} ${px}px "Plus Jakarta Sans"`;
+function decal(w, h, tex, o = {}) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshPhysicalMaterial({ map: tex, transparent: true, roughness: 0.4, clearcoat: 0.5, polygonOffset: true, polygonOffsetFactor: -2, ...o }));
+  m.receiveShadow = true;
+  return m;
+}
+function textLines(g, w, h, lines) {
+  // lines: [{ text, size, color, weight, y, track }]
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const l of lines) {
+    g.font = font(l.size, l.weight || 800);
+    g.fillStyle = l.color;
+    if ('letterSpacing' in g) g.letterSpacing = `${l.track || 0}px`;
+    g.fillText(l.text, l.x ?? w / 2, l.y);
+  }
+}
+
+
+/* ---------- Letras 3D na fonte da marca ---------- */
+const jakarta = new Font(await new Promise((res, rej) => new TTFLoader().load('https://cdn.jsdelivr.net/npm/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff', res, undefined, rej)));
+function paintJoyBox(geo, b, t0 = 0, t1 = 1) {
+  const pos = geo.attributes.position, cols = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const x = (pos.getX(i) - b.min.x) / (b.max.x - b.min.x);
+    const y = (pos.getY(i) - b.min.y) / (b.max.y - b.min.y);
+    const c = joyAt(t0 + (t1 - t0) * (x * 0.75 + (1 - y) * 0.25));
+    cols.set([c.r, c.g, c.b], i * 3);
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+}
+// Cria um texto 3D letra a letra (permite espaçamento). Retorna { group, width, geos }
+function text3d(str, size, depth, { track = 0, mats, colorEach } = {}) {
+  const k = size / jakarta.data.resolution;
+  const group = new THREE.Group(), geos = [];
+  let x = 0, i = 0;
+  for (const ch of str) {
+    const gl = jakarta.data.glyphs[ch];
+    if (ch !== ' ' && gl) {
+      const tg = new TextGeometry(ch, { font: jakarta, size, depth, curveSegments: 20, bevelEnabled: true, bevelThickness: depth * 0.16, bevelSize: size * 0.022, bevelSegments: 8 });
+      tg.translate(x, 0, -depth / 2);
+      geos.push(tg);
+      const m = new THREE.Mesh(tg, colorEach ? colorEach(i) : mats);
+      m.castShadow = m.receiveShadow = true;
+      group.add(m);
+      i++;
+    }
+    x += (gl ? gl.ha * k : size * 0.3) + track;
+  }
+  const width = x - track;
+  group.children.forEach((m) => m.geometry.translate(-width / 2, 0, 0));
+  return { group, width, geos };
+}
+const joyFace = () => [toy(0xffffff, { vertexColors: true, roughness: 0.22, clearcoat: 1 }), toy(0xb0a8bc, { vertexColors: true, roughness: 0.3, clearcoat: 1 })];
+
+/* ---------- Peças reutilizáveis ---------- */
+function pin(bodyMat, s = 1, cColor = C.white) {
+  const geo = new THREE.ExtrudeGeometry(svgShapes(PIN_D), { depth: 3, bevelEnabled: true, bevelThickness: 1.8, bevelSize: 1.5, bevelSegments: 14, curveSegments: 72 });
+  geo.center(); geo.rotateX(Math.PI); geo.scale(0.1 * s, 0.1 * s, 0.1 * s);
+  let mat = bodyMat;
+  if (bodyMat === 'joy') { paintJoy(geo); mat = toy(0xffffff, { vertexColors: true, roughness: 0.28 }); }
+  const g = new THREE.Group();
+  g.add(mesh(geo, mat));
+  const R = 0.6 * s, tube = 0.175 * s, a0 = 0.677, zf = 0.33 * s;
+  const cm = toy(cColor, { roughness: 0.22 });
+  const tor = mesh(new THREE.TorusGeometry(R, tube, 32, 120, Math.PI * 2 - 2 * a0), cm);
+  tor.rotation.z = a0; tor.position.set(0, 0.3 * s, zf + tube * 0.25);
+  g.add(tor);
+  for (const a of [a0, -a0]) {
+    const cap = mesh(new THREE.SphereGeometry(tube, 32, 16), cm);
+    cap.position.set(R * Math.cos(a), 0.3 * s + R * Math.sin(a), zf + tube * 0.25);
+    g.add(cap);
+  }
+  return g;
+}
+function sparkle(color, size = 0.6) {
+  const geo = new THREE.ExtrudeGeometry(svgShapes(SPARK_D), { depth: 3, bevelEnabled: true, bevelThickness: 1.6, bevelSize: 0.8, bevelSegments: 8, curveSegments: 32 });
+  geo.center(); geo.rotateX(Math.PI);
+  const k = size / 24; geo.scale(k, k, k);
+  return mesh(geo, toy(color, { roughness: 0.2 }));
+}
+function keyGeometry() {
+  const parts = [];
+  const bow = new THREE.Shape(); bow.absarc(0, 0, 1, 0, Math.PI * 2, false);
+  const hole = new THREE.Path(); hole.absarc(-0.12, 0, 0.42, 0, Math.PI * 2, true); bow.holes.push(hole);
+  parts.push(bow, roundRect(0.8, -0.21, 4.35, 0.21, 0.08), roundRect(0.92, -0.36, 1.28, 0.36, 0.1),
+    roundRect(3.3, -0.8, 3.68, 0, 0.08), roundRect(3.9, -0.64, 4.25, 0, 0.08));
+  const geos = parts.map((p) => new THREE.ExtrudeGeometry(p, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.09, bevelSize: 0.08, bevelSegments: 8, curveSegments: 64 }));
+  const g = mergeGeometries(geos.map((x) => x.toNonIndexed()));
+  g.center();
+  return g;
+}
+function coinGeometry() {
+  const p = [[0, -0.12], [0.93, -0.12], [1, -0.07], [1, 0.07], [0.93, 0.12], [0.8, 0.12], [0.77, 0.08], [0, 0.08]].map(([x, y]) => new THREE.Vector2(x, y));
+  return new THREE.LatheGeometry(p, 96);
+}
+
+/* ---------- Cenas ---------- */
+const S = {};
+
+// 1. Pin da Cavazani nas cores do Joy
+S['pin-joy-3d'] = () => {
+  const g = new THREE.Group();
+  const p = pin('joy', 1.25); p.rotation.set(0.1, -0.42, 0.06); g.add(p);
+  const s1 = sparkle(C.yellow, 0.9); s1.position.set(1.7, 1.5, 0.3); s1.rotation.set(0.2, -0.4, 0.2); g.add(s1);
+  const s2 = sparkle(C.blue, 0.55); s2.position.set(-1.75, 0.9, 0.5); s2.rotation.set(0.1, 0.5, -0.2); g.add(s2);
+  const s3 = sparkle(C.coral, 0.45); s3.position.set(1.45, -0.7, 0.6); s3.rotation.set(0, -0.3, 0.3); g.add(s3);
+  return { g, dir: [0.15, 0.12, 1] };
+};
+
+// 2. Casinha com chave: "Tchau, aluguel"
+S['casa-tchau-aluguel-3d'] = () => {
+  const g = new THREE.Group();
+  const ground = mesh(new THREE.CylinderGeometry(2.25, 2.25, 0.32, 96), toy(C.grass, { roughness: 0.6, clearcoat: 0.2 }));
+  ground.position.y = -0.16; g.add(ground);
+  const walls = rbox(2.4, 1.75, 2.0, 0.12, toy(C.cream, { roughness: 0.55, clearcoat: 0.3 })); walls.position.y = 0.875; g.add(walls);
+  const tri = new THREE.Shape(); tri.moveTo(-1.5, 0); tri.lineTo(1.5, 0); tri.lineTo(0, 1.3); tri.lineTo(-1.5, 0);
+  const roofGeo = new THREE.ExtrudeGeometry(tri, { depth: 2.25, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.08, bevelSegments: 6 });
+  roofGeo.translate(0, 0, -1.125);
+  const roof = mesh(roofGeo, toy(C.wine, { roughness: 0.3 })); roof.position.y = 1.72; g.add(roof);
+  const chim = rbox(0.36, 0.75, 0.36, 0.06, toy(C.wineDark)); chim.position.set(0.72, 2.55, -0.35); g.add(chim);
+  const door = rbox(0.62, 1.02, 0.14, 0.07, toy(C.orange, { roughness: 0.3 })); door.position.set(-0.45, 0.53, 1.02); g.add(door);
+  const knob = mesh(new THREE.SphereGeometry(0.05, 24, 12), gold()); knob.position.set(-0.27, 0.52, 1.12); g.add(knob);
+  const win = rbox(0.66, 0.58, 0.1, 0.05, glass(0x9fd6f2)); win.position.set(0.55, 0.98, 1.02); g.add(win);
+  const fr = toy(C.white);
+  const f1 = rbox(0.06, 0.62, 0.13, 0.02, fr); f1.position.set(0.55, 0.98, 1.05); g.add(f1);
+  const f2 = rbox(0.7, 0.06, 0.13, 0.02, fr); f2.position.set(0.55, 0.98, 1.05); g.add(f2);
+  const att = mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.1, 48), glow(0xffd27a)); att.rotation.x = Math.PI / 2; att.position.set(0, 2.18, 1.1); g.add(att);
+  const attR = mesh(new THREE.TorusGeometry(0.24, 0.05, 16, 48), fr); attR.position.set(0, 2.18, 1.15); g.add(attR);
+  for (const [x, z, r] of [[-1.55, 0.6, 0.38], [-1.75, -0.2, 0.3], [1.6, -0.6, 0.34]]) {
+    const b = mesh(new THREE.SphereGeometry(r, 32, 16), toy(0x4fae74, { roughness: 0.5 })); b.position.set(x, r * 0.75, z); g.add(b);
+  }
+  // chave dourada deitada na frente
+  const key = mesh(keyGeometry(), gold()); key.scale.setScalar(0.42); key.rotation.set(-Math.PI / 2 + 0.25, 0, 0.5); key.position.set(0.95, 0.12, 1.55); g.add(key);
+  // plaquinha
+  const post = mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.1, 16), toy(C.wood)); post.position.set(-1.45, 0.55, 1.3); g.add(post);
+  const board = rbox(1.25, 0.6, 0.1, 0.06, toy(C.white)); board.position.set(-1.45, 1.15, 1.32); board.rotation.z = -0.06; g.add(board);
+  const t = canvasTex(1000, 480, (c, w, h) => textLines(c, w, h, [
+    { text: 'TCHAU,', size: 150, color: '#8e1b2e', y: 150 },
+    { text: 'ALUGUEL!', size: 150, color: '#1f1633', y: 320 },
+  ]));
+  const d = decal(1.15, 0.55, t); d.position.set(-1.45, 1.15, 1.38); d.rotation.z = -0.06; g.add(d);
+  const s1 = sparkle(C.yellow, 0.6); s1.position.set(1.6, 2.6, 0.5); g.add(s1);
+  const s2 = sparkle(C.coral, 0.4); s2.position.set(-0.9, 2.9, 0.4); g.add(s2);
+  g.rotation.y = -0.42;
+  return { g, dir: [0.1, 0.42, 1] };
+};
+
+// 3. Chave dourada com chaveiro "Suas chaves"
+S['chave-joy-3d'] = () => {
+  const g = new THREE.Group();
+  const key = mesh(keyGeometry(), gold()); key.rotation.z = -0.62; key.position.set(-0.2, -0.3, 0); g.add(key);
+  // argola
+  const ring = mesh(new THREE.TorusGeometry(0.62, 0.075, 24, 96), metal()); ring.position.set(-1.95, 1.05, 0); ring.rotation.set(0.2, 0.9, 0); g.add(ring);
+  // tag
+  const tag = new THREE.Group();
+  const tagShape = new THREE.Shape();
+  tagShape.moveTo(-0.75, -0.95); tagShape.lineTo(0.75, -0.95); tagShape.lineTo(0.75, 0.55); tagShape.lineTo(0, 1.05); tagShape.lineTo(-0.75, 0.55); tagShape.lineTo(-0.75, -0.95);
+  const th = new THREE.Path(); th.absarc(0, 0.62, 0.13, 0, Math.PI * 2, true); tagShape.holes.push(th);
+  const tg = extrude(tagShape, 0.06, 0.05, 6);
+  tag.add(mesh(tg, toy(C.wine, { roughness: 0.32 })));
+  const t = canvasTex(600, 760, (c, w, h) => textLines(c, w, h, [
+    { text: 'JOY LAPA', size: 62, color: '#ffb45c', y: 330, track: 10 },
+    { text: 'Suas', size: 150, color: '#ffffff', y: 470 },
+    { text: 'chaves', size: 150, color: '#ffffff', y: 620 },
+  ]));
+  const d = decal(1.36, 1.72, t); d.position.set(0, 0.0, 0.11); tag.add(d);
+  tag.position.set(-2.55, -0.55, 0.15); tag.rotation.set(0.05, 0.35, 0.22); g.add(tag);
+  // cordinha da tag até a argola
+  const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(-2.38, 0.07, 0.25), new THREE.Vector3(-2.3, 0.6, 0.3), new THREE.Vector3(-2.1, 0.9, 0.2)]);
+  g.add(mesh(new THREE.TubeGeometry(curve, 40, 0.035, 12), toy(C.cream, { roughness: 0.7, clearcoat: 0 })));
+  const s1 = sparkle(C.yellow, 0.75); s1.position.set(1.7, 1.2, 0.4); g.add(s1);
+  const s2 = sparkle(C.blue, 0.45); s2.position.set(0.6, 1.7, 0.3); g.add(s2);
+  const s3 = sparkle(C.coral, 0.4); s3.position.set(2.1, -1.4, 0.4); g.add(s3);
+  g.rotation.set(0.12, -0.28, 0);
+  return { g, dir: [0.1, 0.1, 1] };
+};
+
+// 4. Trem: "Próxima estação: seu apê"
+S['trem-seu-ape-3d'] = () => {
+  const g = new THREE.Group();
+  const body = rbox(2.6, 2.5, 3.6, 0.38, toy(C.red, { roughness: 0.28 })); body.position.y = 0.4; g.add(body);
+  const band = rbox(2.64, 0.38, 3.64, 0.12, toy(C.white)); band.position.y = -0.48; g.add(band);
+  const skirt = rbox(2.4, 0.35, 3.3, 0.1, toy(0x3a3348, { roughness: 0.6 })); skirt.position.y = -0.92; g.add(skirt);
+  const wind = rbox(2.05, 0.95, 0.12, 0.12, glass(0x1f2440)); wind.position.set(0, 0.62, 1.79); g.add(wind);
+  const disp = rbox(1.7, 0.36, 0.1, 0.06, toy(0x111018, { roughness: 0.5 })); disp.position.set(0, 1.37, 1.79); g.add(disp);
+  const dt = canvasTex(1200, 250, (c, w, h) => { c.fillStyle = '#111018'; c.fillRect(0, 0, w, h); textLines(c, w, h, [{ text: 'SEU APÊ', size: 170, color: '#ffb45c', y: 132, track: 14 }]); });
+  const dd = decal(1.58, 0.31, dt, { emissive: 0xffffff, emissiveMap: dt, emissiveIntensity: 1.1, transparent: false }); dd.position.set(0, 1.37, 1.85); g.add(dd);
+  for (const x of [-0.82, 0.82]) {
+    const rimL = mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.08, 40), toy(0x2a2533)); rimL.rotation.x = Math.PI / 2; rimL.position.set(x, -0.12, 1.79); g.add(rimL);
+    const l = mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.1, 40), glow(0xfff1c2)); l.rotation.x = Math.PI / 2; l.position.set(x, -0.12, 1.82); g.add(l);
+  }
+  const coup = rbox(0.5, 0.3, 0.3, 0.06, metal()); coup.position.set(0, -0.92, 1.75); g.add(coup);
+  // janelas laterais
+  for (const z of [0.85, -0.25, -1.35]) {
+    const w = rbox(0.1, 0.72, 0.82, 0.08, glass(0x1f2440)); w.position.set(1.31, 0.7, z); g.add(w);
+  }
+  // faixa "Linha Joy" na lateral
+  const jt = canvasTex(1024, 64, (c, w, h) => { const gr = c.createLinearGradient(0, 0, w, 0); ['#57b7e8', '#7dd6a4', '#f3d36b', '#f39a7a', '#b77cdd'].forEach((col, i) => gr.addColorStop(i / 4, col)); c.fillStyle = gr; c.fillRect(0, 0, w, h); });
+  const jd = decal(3.3, 0.16, jt, { transparent: false }); jd.rotation.y = Math.PI / 2; jd.position.set(1.322, 0.1, 0); g.add(jd);
+  // pantógrafo
+  const pm = metal();
+  const base = rbox(0.9, 0.12, 0.6, 0.04, pm); base.position.set(0, 1.71, -0.4); g.add(base);
+  for (const [a, x] of [[0.55, -0.22], [-0.55, 0.22]]) {
+    const arm = mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.85, 12), pm); arm.position.set(x, 2.05, -0.4); arm.rotation.z = a; g.add(arm);
+  }
+  const bar = mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.3, 12), pm); bar.rotation.z = Math.PI / 2; bar.position.set(0, 2.4, -0.4); g.add(bar);
+  // trilhos e dormentes
+  for (const x of [-0.78, 0.78]) {
+    const rail = rbox(0.12, 0.12, 6.4, 0.03, metal({ roughness: 0.35 })); rail.position.set(x, -1.18, 0.4); g.add(rail);
+  }
+  for (let z = -2.6; z <= 3.4; z += 0.6) {
+    const sl = rbox(2.2, 0.1, 0.32, 0.04, toy(0x8a6a55, { roughness: 0.75, clearcoat: 0 })); sl.position.set(0, -1.29, z); g.add(sl);
+  }
+  const s1 = sparkle(C.yellow, 0.65); s1.position.set(-1.9, 2.0, 1.4); g.add(s1);
+  const s2 = sparkle(C.blue, 0.42); s2.position.set(1.9, 2.3, 1.0); g.add(s2);
+  g.rotation.y = -0.62;
+  return { g, dir: [0.05, 0.22, 1] };
+};
+
+// 5. Calendário 24/10 com o pin espetado
+S['calendario-24-10-3d'] = () => {
+  const g = new THREE.Group();
+  const back = rbox(2.7, 3.15, 0.18, 0.12, toy(0xefe6f2, { roughness: 0.6, clearcoat: 0.2 })); back.position.set(0.12, -0.08, -0.18); back.rotation.z = 0.05; g.add(back);
+  const page = rbox(2.7, 3.15, 0.22, 0.12, toy(C.white, { roughness: 0.5, clearcoat: 0.3 })); g.add(page);
+  const head = rbox(2.72, 0.85, 0.26, 0.12, toy(C.wine, { roughness: 0.3 })); head.position.y = 1.15; g.add(head);
+  const ht = canvasTex(1000, 300, (c, w, h) => textLines(c, w, h, [{ text: 'OUTUBRO', size: 150, color: '#ffffff', y: 160, track: 22 }]));
+  const hd = decal(2.4, 0.72, ht); hd.position.set(0, 1.12, 0.135); g.add(hd);
+  const pt = canvasTex(1000, 860, (c, w, h) => textLines(c, w, h, [
+    { text: '24', size: 560, color: '#1f1633', y: 360 },
+    { text: 'LANÇAMENTO OFICIAL', size: 78, color: '#8e1b2e', y: 740, track: 6 },
+  ]));
+  const pd = decal(2.45, 2.1, pt); pd.position.set(0, -0.52, 0.115); g.add(pd);
+  for (const x of [-0.7, 0.7]) {
+    const r = mesh(new THREE.TorusGeometry(0.2, 0.055, 20, 64), metal()); r.position.set(x, 1.6, 0); r.rotation.y = Math.PI / 2; g.add(r);
+  }
+  // pin espetado marcando a data
+  const p = pin(toy(C.orange, { roughness: 0.25 }), 0.48, C.white); p.position.set(1.55, 1.95, 0.45); p.rotation.set(-0.25, -0.45, -0.5); g.add(p);
+  const s1 = sparkle(C.yellow, 0.6); s1.position.set(-1.6, 1.9, 0.4); g.add(s1);
+  const s2 = sparkle(C.purple, 0.4); s2.position.set(1.65, -1.45, 0.4); g.add(s2);
+  g.rotation.set(0.06, -0.38, 0.04);
+  return { g, dir: [0.12, 0.1, 1] };
+};
+
+// 6. Balão "EU QUERO!" inflado
+S['balao-eu-quero-3d'] = () => {
+  const g = new THREE.Group();
+  const w = 3.6, h = 1.75, r = 0.8, x0 = -w / 2, x1 = w / 2, y0 = -h / 2, y1 = h / 2;
+  const s = new THREE.Shape();
+  s.moveTo(x0 + r, y0); s.lineTo(-0.95, y0); s.lineTo(-1.45, y0 - 0.7); s.lineTo(-0.3, y0); s.lineTo(x1 - r, y0);
+  s.quadraticCurveTo(x1, y0, x1, y0 + r); s.lineTo(x1, y1 - r); s.quadraticCurveTo(x1, y1, x1 - r, y1);
+  s.lineTo(x0 + r, y1); s.quadraticCurveTo(x0, y1, x0, y1 - r); s.lineTo(x0, y0 + r); s.quadraticCurveTo(x0, y0, x0 + r, y0);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 0.2, bevelEnabled: true, bevelThickness: 0.42, bevelSize: 0.34, bevelSegments: 16, curveSegments: 48 });
+  geo.translate(0, 0, -0.1);
+  g.add(mesh(geo, toy(C.orange, { roughness: 0.22, clearcoat: 1 })));
+  const t = canvasTex(1400, 600, (c, wd, ht) => textLines(c, wd, ht, [{ text: 'EU QUERO!', size: 250, color: '#1f1633', y: 310 }]));
+  const d = decal(3.3, 1.41, t); d.position.set(0, 0.02, 0.53); g.add(d);
+  // coração
+  const hs = new THREE.Shape();
+  hs.moveTo(5, 5); hs.bezierCurveTo(5, 5, 4, 0, 0, 0); hs.bezierCurveTo(-6, 0, -6, 7, -6, 7); hs.bezierCurveTo(-6, 11, -3, 15.4, 5, 19);
+  hs.bezierCurveTo(12, 15.4, 16, 11, 16, 7); hs.bezierCurveTo(16, 7, 16, 0, 10, 0); hs.bezierCurveTo(7, 0, 5, 5, 5, 5);
+  const hg = new THREE.ExtrudeGeometry(hs, { depth: 3, bevelEnabled: true, bevelThickness: 2.5, bevelSize: 2, bevelSegments: 12, curveSegments: 48 });
+  hg.center(); hg.rotateX(Math.PI); hg.scale(0.045, 0.045, 0.045);
+  const heart = mesh(hg, toy(C.red, { roughness: 0.2 })); heart.position.set(2.05, 1.05, 0.5); heart.rotation.set(0.1, -0.35, -0.3); g.add(heart);
+  const s1 = sparkle(C.yellow, 0.55); s1.position.set(-2.1, 1.15, 0.4); g.add(s1);
+  const s2 = sparkle(C.purple, 0.35); s2.position.set(2.35, -0.4, 0.5); g.add(s2);
+  g.rotation.set(0.1, -0.32, 0.05);
+  return { g, dir: [0.1, 0.05, 1] };
+};
+
+// 7. Moedas com faixa "Subsídio de até R$ 55 mil"
+S['moedas-subsidio-3d'] = () => {
+  const g = new THREE.Group();
+  const cg = coinGeometry();
+  const faceTex = canvasTex(800, 800, (c, w, h) => {
+    const gr = c.createRadialGradient(w * 0.4, h * 0.35, 40, w / 2, h / 2, w / 2);
+    gr.addColorStop(0, '#ffe39a'); gr.addColorStop(1, '#e9a93b');
+    c.fillStyle = gr; c.beginPath(); c.arc(w / 2, h / 2, w / 2, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = 'rgba(150,90,10,.55)'; c.lineWidth = 18; c.beginPath(); c.arc(w / 2, h / 2, w / 2 - 70, 0, Math.PI * 2); c.stroke();
+    textLines(c, w, h, [{ text: 'R$', size: 320, color: '#a4660f', y: h / 2 + 10 }]);
+  });
+  const coinMat = gold();
+  const stack = [[0, 0, 0], [0.04, 0.24, 0.5], [-0.03, 0.48, 1.2], [0.05, 0.72, 2.1], [-0.02, 0.96, 0.3]];
+  for (const [dx, y, rot] of stack) {
+    const c = mesh(cg, coinMat); c.position.set(-0.95 + dx, y - 0.6, -0.2); c.rotation.y = rot; g.add(c);
+  }
+  const top = new THREE.Mesh(new THREE.CircleGeometry(0.78, 96), new THREE.MeshPhysicalMaterial({ map: faceTex, metalness: 0.75, roughness: 0.28, polygonOffset: true, polygonOffsetFactor: -2 }));
+  top.rotation.x = -Math.PI / 2; top.position.set(-0.97, 0.465, -0.2); g.add(top);
+  // moeda em pé
+  const up = new THREE.Group();
+  up.add(mesh(cg, coinMat));
+  const f = new THREE.Mesh(new THREE.CircleGeometry(0.78, 96), new THREE.MeshPhysicalMaterial({ map: faceTex, metalness: 0.75, roughness: 0.28, polygonOffset: true, polygonOffsetFactor: -2 }));
+  f.rotation.x = -Math.PI / 2; f.position.y = 0.085; up.add(f);
+  up.rotation.set(Math.PI / 2 - 0.15, 0, 0.18); up.rotation.order = 'ZXY';
+  up.position.set(0.9, -0.05, 0.4); g.add(up);
+  // faixa curva
+  const W = 4.8, Hh = 0.9;
+  const bg = new THREE.PlaneGeometry(W, Hh, 120, 1);
+  const pos = bg.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    pos.setZ(i, -0.55 * (x / (W / 2)) ** 2);
+    pos.setY(i, pos.getY(i) + 0.14 * Math.sin(x * 1.3));
+  }
+  bg.computeVertexNormals();
+  const bt = canvasTex(2400, 450, (c, w, h) => {
+    c.fillStyle = '#8e1b2e'; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#6f1323'; c.fillRect(0, 0, w, 18); c.fillRect(0, h - 18, w, 18);
+    textLines(c, w, h, [{ text: 'SUBSÍDIO DE ATÉ R$ 55 MIL', size: 170, color: '#ffffff', y: h / 2 + 6, track: 4 }]);
+  });
+  const band = new THREE.Mesh(bg, new THREE.MeshPhysicalMaterial({ map: bt, side: THREE.DoubleSide, roughness: 0.35, clearcoat: 0.6 }));
+  band.castShadow = true; band.position.set(0, -1.15, 1.25); band.rotation.set(-0.08, 0, -0.04); g.add(band);
+  const s1 = sparkle(C.yellow, 0.7); s1.position.set(1.95, 1.25, 0.2); g.add(s1);
+  const s2 = sparkle(C.blue, 0.45); s2.position.set(-2.15, 0.85, 0.3); g.add(s2);
+  const s3 = sparkle(C.coral, 0.38); s3.position.set(2.3, -0.2, 0.5); g.add(s3);
+  g.rotation.set(0.12, -0.15, 0);
+  return { g, dir: [0.05, 0.3, 1] };
+};
+
+// 8. Ingresso dourado "Lista VIP"
+S['ingresso-vip-3d'] = () => {
+  const g = new THREE.Group();
+  const ticket = (w, h, r, n) => {
+    const s = new THREE.Shape(), x0 = -w / 2, x1 = w / 2, y0 = -h / 2, y1 = h / 2;
+    s.moveTo(x0 + r, y0); s.lineTo(x1 - r, y0); s.quadraticCurveTo(x1, y0, x1, y0 + r); s.lineTo(x1, -n);
+    s.absarc(x1, 0, n, -Math.PI / 2, Math.PI / 2, true); s.lineTo(x1, y1 - r); s.quadraticCurveTo(x1, y1, x1 - r, y1);
+    s.lineTo(x0 + r, y1); s.quadraticCurveTo(x0, y1, x0, y1 - r); s.lineTo(x0, n);
+    s.absarc(x0, 0, n, Math.PI / 2, -Math.PI / 2, true); s.lineTo(x0, y0 + r); s.quadraticCurveTo(x0, y0, x0 + r, y0);
+    return extrude(s, 0.08, 0.05, 6);
+  };
+  const tg = ticket(3.8, 1.85, 0.22, 0.3);
+  const back = mesh(tg, toy(C.wine, { roughness: 0.3 })); back.position.set(0.35, 0.45, -0.35); back.rotation.z = 0.22; g.add(back);
+  const front = mesh(tg, gold({ roughness: 0.24 })); front.rotation.z = -0.1; g.add(front);
+  const ft = canvasTex(2000, 975, (c, w, h) => {
+    c.fillStyle = 'rgba(255,240,200,.0)'; c.fillRect(0, 0, w, h);
+    c.strokeStyle = 'rgba(111,19,35,.55)'; c.lineWidth = 10; c.setLineDash([26, 22]);
+    c.beginPath(); c.moveTo(560, 60); c.lineTo(560, h - 60); c.stroke(); c.setLineDash([]);
+    c.save(); c.translate(290, h / 2); c.rotate(-Math.PI / 2); textLines(c, 0, 0, [{ text: 'VIP', size: 220, color: '#6f1323', x: 0, y: 0, track: 20 }]); c.restore();
+    textLines(c, w, h, [
+      { text: 'JOY LAPA · 24/10', size: 84, color: '#6f1323', x: 1270, y: 250, track: 12 },
+      { text: 'LISTA VIP', size: 250, color: '#3a0d16', x: 1270, y: 490 },
+      { text: 'Tabela antes de todo mundo', size: 70, color: '#6f1323', weight: 700, x: 1270, y: 700 },
+    ]);
+  });
+  const fd = decal(3.6, 1.75, ft, { metalness: 0.4, roughness: 0.35 }); fd.position.set(0, 0, 0.096); fd.rotation.z = -0.1; g.add(fd);
+  // confete
+  const conf = [[C.blue, -2.2, 1.3, 0.3], [C.yellow, 2.15, 1.35, 0.4], [C.coral, 2.2, -1.1, 0.2], [C.purple, -2.05, -1.2, 0.4], [C.green, 0.4, 1.7, 0.5]];
+  for (const [col, x, y, z] of conf) {
+    const p = rbox(0.28, 0.12, 0.04, 0.02, toy(col, { roughness: 0.25 })); p.position.set(x, y, z); p.rotation.set(x, y, x * y); g.add(p);
+  }
+  const s1 = sparkle(C.yellow, 0.7); s1.position.set(1.9, 1.05, 0.5); g.add(s1);
+  const s2 = sparkle(C.white, 0.4); s2.position.set(-1.6, 1.25, 0.6); g.add(s2);
+  g.rotation.set(0.28, -0.42, 0.04);
+  return { g, dir: [0.08, 0.12, 1] };
+};
+
+// 9. Mini piscina: "24 itens de lazer"
+S['piscina-lazer-3d'] = () => {
+  const g = new THREE.Group();
+  const base = rbox(4.2, 0.7, 3.2, 0.2, toy(0xf1dcc2, { roughness: 0.6, clearcoat: 0.2 })); g.add(base);
+  const side = rbox(4.24, 0.32, 3.24, 0.14, toy(C.terracotta, { roughness: 0.55 })); side.position.y = -0.22; g.add(side);
+  const water = rbox(2.5, 0.12, 1.7, 0.06, new THREE.MeshPhysicalMaterial({ color: 0x1fa3e3, roughness: 0.04, metalness: 0.1, clearcoat: 1, emissive: 0x0d6fa8, emissiveIntensity: 0.35 }));
+  water.position.set(-0.35, 0.33, 0.05); g.add(water);
+  const cope = toy(C.white, { roughness: 0.4 });
+  for (const [w, d, x, z] of [[2.7, 0.12, -0.35, 0.95], [2.7, 0.12, -0.35, -0.85], [0.12, 1.92, -1.66, 0.05], [0.12, 1.92, 0.96, 0.05]]) {
+    const b = rbox(w, 0.1, d, 0.04, cope); b.position.set(x, 0.38, z); g.add(b);
+  }
+  // boia listrada
+  const st = canvasTex(1024, 128, (c, w, h) => { for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#ffffff' : '#f39a7a'; c.fillRect(i * w / 8, 0, w / 8, h); } });
+  const buoy = mesh(new THREE.TorusGeometry(0.34, 0.13, 32, 96), new THREE.MeshPhysicalMaterial({ map: st, roughness: 0.3, clearcoat: 1 }));
+  buoy.rotation.x = -Math.PI / 2 + 0.15; buoy.position.set(-0.75, 0.48, 0.15); g.add(buoy);
+  // escada
+  const lm = metal();
+  for (const x of [0.62, 0.86]) {
+    const c = new THREE.CatmullRomCurve3([new THREE.Vector3(x, 0.38, 0.62), new THREE.Vector3(x, 0.75, 0.75), new THREE.Vector3(x, 0.78, 0.98), new THREE.Vector3(x, 0.42, 1.05)]);
+    g.add(mesh(new THREE.TubeGeometry(c, 40, 0.035, 12), lm));
+  }
+  // espreguiçadeira
+  const lb = rbox(0.62, 0.12, 1.25, 0.05, toy(C.wood)); lb.position.set(1.65, 0.45, 0.25); g.add(lb);
+  const cu = rbox(0.58, 0.1, 0.85, 0.05, toy(C.orange, { roughness: 0.4 })); cu.position.set(1.65, 0.55, 0.42); g.add(cu);
+  const bk = rbox(0.58, 0.1, 0.55, 0.05, toy(C.orange, { roughness: 0.4 })); bk.position.set(1.65, 0.72, -0.18); bk.rotation.x = 0.75; g.add(bk);
+  // guarda-sol
+  const pole = mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.7, 12), toy(C.white)); pole.position.set(1.6, 1.2, -0.85); g.add(pole);
+  const ut = canvasTex(1024, 128, (c, w, h) => { for (let i = 0; i < 10; i++) { c.fillStyle = i % 2 ? '#ffffff' : '#8e1b2e'; c.fillRect(i * w / 10, 0, w / 10, h); } });
+  const umb = mesh(new THREE.ConeGeometry(0.95, 0.42, 64, 1, true), new THREE.MeshPhysicalMaterial({ map: ut, roughness: 0.45, side: THREE.DoubleSide, clearcoat: 0.4 }));
+  umb.position.set(1.6, 2.05, -0.85); g.add(umb);
+  // planta
+  const pot = mesh(new THREE.CylinderGeometry(0.26, 0.2, 0.42, 40), toy(C.terracotta)); pot.position.set(-1.75, 0.56, -1.2); g.add(pot);
+  for (const [x, y, z, r] of [[-1.75, 1.02, -1.2, 0.34], [-1.95, 0.9, -1.05, 0.24], [-1.55, 0.92, -1.05, 0.24], [-1.75, 1.3, -1.25, 0.22]]) {
+    const l = mesh(new THREE.SphereGeometry(r, 32, 16), toy(0x4fae74, { roughness: 0.5 })); l.position.set(x, y, z); g.add(l);
+  }
+  // etiqueta
+  const tagm = rbox(2.5, 0.52, 0.14, 0.12, toy(C.wine, { roughness: 0.3 })); tagm.position.set(0, -0.12, 1.66); g.add(tagm);
+  const tt = canvasTex(1400, 290, (c, w, h) => textLines(c, w, h, [{ text: '24 itens de lazer', size: 150, color: '#ffffff', y: 150 }]));
+  const td = decal(2.35, 0.49, tt); td.position.set(0, -0.12, 1.74); g.add(td);
+  const s1 = sparkle(C.yellow, 0.6); s1.position.set(-1.9, 2.0, 0.3); g.add(s1);
+  const s2 = sparkle(C.blue, 0.4); s2.position.set(0.3, 1.9, -0.2); g.add(s2);
+  g.rotation.set(0, -0.48, 0);
+  return { g, dir: [0.05, 0.62, 1] };
+};
+
+// 10. Prédio Joy Lapa com o pin "você vai morar aqui"
+S['predio-joy-3d'] = () => {
+  const g = new THREE.Group();
+  const ground = mesh(new THREE.CylinderGeometry(1.95, 1.95, 0.24, 96), toy(C.grass, { roughness: 0.6, clearcoat: 0.2 })); ground.position.y = -0.12; g.add(ground);
+  const pod = rbox(2.0, 0.42, 1.9, 0.08, toy(C.wood, { roughness: 0.5 })); pod.position.y = 0.21; g.add(pod);
+  const H = 4.3;
+  const tower = rbox(1.5, H, 1.5, 0.08, toy(0xfbf8f4, { roughness: 0.55, clearcoat: 0.3 })); tower.position.y = 0.42 + H / 2; g.add(tower);
+  const facade = (warmEvery, terracottaLeft) => canvasTex(600, 1720, (c, w, h) => {
+    c.fillStyle = '#fbf8f4'; c.fillRect(0, 0, w, h);
+    if (terracottaLeft) { c.fillStyle = '#a65a3a'; c.fillRect(0, 0, w * 0.32, h); }
+    const cols = 3, rows = 16, x0 = terracottaLeft ? w * 0.38 : 50, cw = (w - x0 - 40) / cols;
+    for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) {
+      const lit = (r * 7 + k * 3) % warmEvery === 0;
+      c.fillStyle = lit ? '#ffd27a' : '#3a4060';
+      c.fillRect(x0 + k * cw + 12, 40 + r * 104, cw - 24, 62);
+    }
+  });
+  const ff = decal(1.42, H - 0.12, facade(5, true), { transparent: false }); ff.position.set(0, 0.42 + H / 2, 0.755); g.add(ff);
+  const fs = decal(1.42, H - 0.12, facade(4, false), { transparent: false }); fs.rotation.y = Math.PI / 2; fs.position.set(0.755, 0.42 + H / 2, 0); g.add(fs);
+  // pergolado no topo
+  const pg = toy(C.wood);
+  for (const x of [-0.55, -0.18, 0.18, 0.55]) { const b = rbox(0.08, 0.06, 1.3, 0.02, pg); b.position.set(x, 0.42 + H + 0.32, 0); g.add(b); }
+  for (const [x, z] of [[-0.6, -0.6], [0.6, -0.6], [-0.6, 0.6], [0.6, 0.6]]) { const c = rbox(0.06, 0.32, 0.06, 0.02, pg); c.position.set(x, 0.42 + H + 0.16, z); g.add(c); }
+  // árvores
+  for (const [x, z, s] of [[-1.35, 0.9, 1], [1.3, 1.05, 0.85], [-1.25, -1.0, 0.8]]) {
+    const tr = mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.5 * s, 12), toy(C.wood)); tr.position.set(x, 0.25 * s, z); g.add(tr);
+    const cp = mesh(new THREE.SphereGeometry(0.42 * s, 32, 16), toy(0x4fae74, { roughness: 0.5 })); cp.position.set(x, 0.75 * s, z); g.add(cp);
+  }
+  // pin flutuando acima
+  const p = pin(toy(C.wine, { roughness: 0.22 }), 0.75); p.position.set(0, 0.42 + H + 1.65, 0); p.rotation.y = -0.2; g.add(p);
+  // etiqueta
+  const tagm = rbox(2.3, 0.5, 0.14, 0.12, toy(C.orange, { roughness: 0.3 })); tagm.position.set(0.0, 0.12, 1.1); g.add(tagm);
+  const tt = canvasTex(1400, 300, (c, w, h) => textLines(c, w, h, [{ text: 'SEU JOY LAPA', size: 150, color: '#1f1633', y: 155, track: 6 }]));
+  const td = decal(2.15, 0.46, tt); td.position.set(0, 0.12, 1.18); g.add(td);
+  const s1 = sparkle(C.yellow, 0.6); s1.position.set(1.3, 5.6, 0); g.add(s1);
+  const s2 = sparkle(C.blue, 0.42); s2.position.set(-1.25, 6.1, 0); g.add(s2);
+  g.rotation.y = -0.6;
+  return { g, dir: [0.05, 0.28, 1] };
+};
+
+
+// 11. Logo 3D: CAVAZANI / JOY LAPA
+S['logo-joy-lapa-3d'] = () => {
+  const g = new THREE.Group();
+  const SZ = 1.75, Y_JOY = 2.1, Y_LAPA = 0;
+  const joy = text3d('JOY', SZ, 0.46, { mats: joyFace(), track: 0.04 });
+  const lapa = text3d('LAPA', SZ, 0.46, { mats: joyFace(), track: 0.04 });
+  const left = -lapa.width / 2;
+  joy.group.position.set(left + joy.width / 2, Y_JOY, 0);
+  lapa.group.position.set(0, Y_LAPA, 0);
+  // um gradiente só, contínuo entre as duas linhas
+  const minX = left, maxX = lapa.width / 2, minY = Y_LAPA, maxY = Y_JOY + SZ * 0.75;
+  for (const [grp, ox, oy] of [[joy.group, joy.group.position.x, Y_JOY], [lapa.group, 0, Y_LAPA]]) {
+    grp.children.forEach((m) => paintJoyBox(m.geometry, { min: { x: minX - ox, y: minY - oy }, max: { x: maxX - ox, y: maxY - oy } }));
+  }
+  g.add(joy.group, lapa.group);
+  // três barrinhas "///" em vinho ao lado do JOY
+  const bm = toy(C.wine, { roughness: 0.22 });
+  for (let i = 0; i < 3; i++) {
+    const b = rbox(0.2, 1.05, 0.34, 0.08, bm); b.rotation.z = -0.42; b.position.set(left + joy.width + 0.65 + i * 0.42, Y_JOY + 0.62, 0); g.add(b);
+  }
+  // CAVAZANI em cima
+  const cav = text3d('CAVAZANI', 0.62, 0.22, { mats: toy(C.wine, { roughness: 0.22 }), track: 0.14 });
+  cav.group.position.set(left + cav.width / 2, Y_JOY + SZ * 0.75 + 0.85, 0); g.add(cav.group);
+  // pin à esquerda
+  const p = pin(toy(C.wine, { roughness: 0.2 }), 1.2); p.position.set(left - 2.05, 1.75, 0.15); p.rotation.set(0.04, 0.32, 0.06); g.add(p);
+  const s1 = sparkle(C.yellow, 0.85); s1.position.set(maxX + 0.45, 3.9, 0.3); g.add(s1);
+  const s2 = sparkle(C.blue, 0.5); s2.position.set(left - 3.3, 4.0, 0.4); g.add(s2);
+  const s3 = sparkle(C.coral, 0.45); s3.position.set(maxX + 0.5, -0.45, 0.6); g.add(s3);
+  g.rotation.set(0.08, -0.16, 0.02);
+  return { g, dir: [0.06, 0.08, 1] };
+};
+
+// 12. Letreiro: JOY LAPA em pé sobre o canteiro
+S['letreiro-joy-lapa-3d'] = () => {
+  const g = new THREE.Group();
+  const pal = [0x3fa9e6, 0x4fcf8f, 0xf7c53a, 0xf2795a, 0xa95fd8, 0x3fa9e6, 0xf7c53a];
+  const word = text3d('JOY LAPA', 1.5, 0.5, { track: 0.13, colorEach: (i) => toy(pal[i % pal.length], { roughness: 0.22, clearcoat: 1 }) });
+  word.group.position.set(-0.35, 0.62, 0); g.add(word.group);
+  const W = word.width + 2.9;
+  const base = rbox(W, 0.62, 1.7, 0.16, toy(0x8b5a3c, { roughness: 0.5, clearcoat: 0.3 })); base.position.set(0.25, 0.31, 0); g.add(base);
+  const grass = rbox(W - 0.12, 0.14, 1.56, 0.07, toy(C.grass, { roughness: 0.65, clearcoat: 0.15 })); grass.position.set(0.25, 0.66, 0); g.add(grass);
+  // placa CAVAZANI na frente
+  const plate = rbox(4.6, 0.5, 0.1, 0.08, toy(C.wine, { roughness: 0.25 })); plate.position.set(-0.35, 0.31, 0.9); g.add(plate);
+  const pt = canvasTex(2200, 230, (c, w, h) => textLines(c, w, h, [{ text: 'CAVAZANI', size: 170, color: '#ffffff', y: 120, track: 60 }]));
+  const pd = decal(4.45, 0.46, pt); pd.position.set(-0.35, 0.31, 0.96); g.add(pd);
+  // spots de luz
+  for (const x of [-3.2, -1.6, 0.9, 2.3]) {
+    const sp = mesh(new THREE.SphereGeometry(0.07, 20, 10), glow(0xfff1c2)); sp.position.set(x, 0.75, 0.62); g.add(sp);
+  }
+  // plantinhas
+  for (const [x, z, r] of [[-(W / 2) + 0.75, -0.25, 0.36], [-(W / 2) + 0.45, 0.35, 0.26], [W / 2 - 0.25, -0.35, 0.3]]) {
+    const b = mesh(new THREE.SphereGeometry(r, 32, 16), toy(0x4fae74, { roughness: 0.5 })); b.position.set(x + 0.25, 0.73 + r * 0.7, z); g.add(b);
+  }
+  // pin no canteiro
+  const p = pin(toy(C.wine, { roughness: 0.2 }), 0.62); p.position.set(W / 2 - 0.55, 1.95, 0.15); p.rotation.y = -0.25; g.add(p);
+  const s1 = sparkle(C.yellow, 0.65); s1.position.set(-2.9, 2.6, 0.3); g.add(s1);
+  const s2 = sparkle(C.purple, 0.42); s2.position.set(0.6, 2.75, 0.2); g.add(s2);
+  g.rotation.set(0, 0.24, 0);
+  return { g, dir: [-0.04, 0.22, 1] };
+};
+
+// 13. Medalha CAVAZANI · JOY LAPA com o pin em relevo
+S['selo-joy-lapa-3d'] = () => {
+  const g = new THREE.Group();
+  const disc = mesh(new THREE.CylinderGeometry(2.1, 2.1, 0.36, 160), toy(C.wine, { roughness: 0.25 })); disc.rotation.x = Math.PI / 2; g.add(disc);
+  const ring = mesh(new THREE.TorusGeometry(2.1, 0.15, 32, 200), toy(C.white, { roughness: 0.2 })); g.add(ring);
+  const inner = mesh(new THREE.TorusGeometry(1.32, 0.045, 20, 160), gold()); inner.position.z = 0.19; g.add(inner);
+  const rt = canvasTex(1600, 1600, (c, w, h) => {
+    const cx = w / 2, cy = h / 2, R = 640, txt = 'CAVAZANI  •  JOY LAPA  •  CAVAZANI  •  JOY LAPA  •  ';
+    c.font = font(118); c.fillStyle = '#ffffff'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    const total = [...txt].reduce((a, ch) => a + c.measureText(ch).width, 0);
+    let ang = -Math.PI / 2 - (total / R) / 2 + Math.PI;
+    const scaleA = (Math.PI * 2) / total;
+    for (const ch of txt) {
+      const wch = c.measureText(ch).width * scaleA;
+      ang += wch / 2;
+      c.save(); c.translate(cx + R * Math.cos(ang), cy + R * Math.sin(ang)); c.rotate(ang + Math.PI / 2); c.fillText(ch, 0, 0); c.restore();
+      ang += wch / 2;
+    }
+  });
+  const rd = decal(4.2, 4.2, rt); rd.position.z = 0.185; g.add(rd);
+  const p = pin('joy', 0.82); p.position.set(0, 0.05, 0.55); g.add(p);
+  const s1 = sparkle(C.yellow, 0.75); s1.position.set(1.9, 1.9, 0.6); g.add(s1);
+  const s2 = sparkle(C.blue, 0.45); s2.position.set(-2.1, -1.75, 0.6); g.add(s2);
+  g.rotation.set(0.18, -0.42, 0.06);
+  return { g, dir: [0.05, 0.08, 1] };
+};
+
+/* ---------- Monta, enquadra e renderiza ---------- */
+const build = S[id] || S['pin-joy-3d'];
+const { g, dir, fov = 26 } = build();
+scene.add(g);
+g.updateMatrixWorld(true);
+const box = new THREE.Box3().setFromObject(g);
+const sphere = box.getBoundingSphere(new THREE.Sphere());
+const cam = new THREE.PerspectiveCamera(fov, 1, 0.1, 200);
+const dist = sphere.radius / Math.sin(THREE.MathUtils.degToRad(fov / 2)) * 1.02;
+const v = new THREE.Vector3(...dir).normalize();
+cam.position.copy(sphere.center).addScaledVector(v, dist);
+cam.lookAt(sphere.center);
+keyLight.target.position.copy(sphere.center); scene.add(keyLight.target);
+renderer.render(scene, cam);
+document.title = 'pronto';
+if (new URLSearchParams(location.search).get('lista')) document.title = Object.keys(S).join(',');
+</script>
+</body>
+</html>
