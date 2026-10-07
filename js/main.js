@@ -11,9 +11,11 @@
     // Deixe vazio ('') para não mostrar.
     creci: 'Gabriel Guerra - Corretor de imóveis - CRECI 267059-f',
 
-    // ID do Pixel da Meta (Facebook/Instagram Ads). Ex.: '123456789012345'
-    // Se preenchido, a página registra PageView e dispara "Lead" no envio do formulário.
-    metaPixelId: '',
+    // ID do Pixel da Meta (Facebook/Instagram Ads): SÓ OS NÚMEROS, não o código inteiro.
+    // Ex.: '123456789012345'. O código do Pixel já está pronto mais abaixo neste arquivo.
+    // Se preenchido, a página registra PageView, "Lead" no envio do formulário
+    // e "Contact" nos botões de WhatsApp.
+    metaPixelId: '2018343195510481',
 
     // Mensagem dos botões de WhatsApp direto (sem formulário)
     mensagemPadrao: 'Olá! Quero saber mais sobre o Joy Lapa.',
@@ -26,7 +28,8 @@
   const waUrl = (text) => `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(text)}`;
 
   /* ---------- Meta Pixel (opcional) ---------- */
-  const pixelId = String(CONFIG.metaPixelId || '').trim();
+  // usa só os dígitos do ID (tolera espaços ou texto junto, ex.: "ID 123...")
+  const pixelId = (String(CONFIG.metaPixelId || '').match(/\d{10,20}/) || [''])[0];
   if (pixelId) {
     /* eslint-disable */
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -38,7 +41,7 @@
     window.fbq('init', pixelId);
     window.fbq('track', 'PageView');
   }
-  const track = (event, data) => { if (pixelId && window.fbq) window.fbq('track', event, data); };
+  const track = (event, data) => { if (pixelId && window.fbq) window.fbq('track', event, ...(data ? [data] : [])); };
 
   /* ---------- Rodapé: ano e CRECI ---------- */
   $$('.js-year').forEach((el) => (el.textContent = new Date().getFullYear()));
@@ -322,7 +325,10 @@
     submit.disabled = true;
     submitLabel.textContent = 'Enviando...';
 
-    // Salva o lead no Netlify Forms (no máximo 1,5 s de espera) e abre o WhatsApp
+    // Evento "Lead" do Pixel antes de sair da página, para dar tempo de ser enviado
+    track('Lead', { content_name: 'Joy Lapa', content_category: String(data.get('renda')) });
+
+    // Salva o lead no Netlify Forms (espera de 0,6 s a 1,5 s) e abre o WhatsApp
     const body = new URLSearchParams(data).toString();
     const save = fetch('/', {
       method: 'POST',
@@ -330,9 +336,8 @@
       body,
       keepalive: true,
     }).catch(() => null);
-    await Promise.race([save, new Promise((r) => setTimeout(r, 1500))]);
-
-    track('Lead', { content_name: 'Joy Lapa', content_category: String(data.get('renda')) });
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    await Promise.all([Promise.race([save, wait(1500)]), wait(600)]);
 
     const url = waUrl(msg);
     status.innerHTML = `Pronto! Abrindo o WhatsApp... Se não abrir, <a href="${url}" target="_blank" rel="noopener">toque aqui</a>.`;

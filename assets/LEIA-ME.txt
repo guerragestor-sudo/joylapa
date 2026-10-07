@@ -9,7 +9,9 @@ Abra js/main.js e preencha o bloco "EDITE AQUI" no topo:
     whatsapp: '5511945913535',   → número que recebe os leads (55 + DDD + número)
     creci: '',                   → ex.: 'Guerra · Corretor de imóveis · CRECI 000000-F'
                                    (aparece no rodapé; anúncio de imóvel deve ter o CRECI)
-    metaPixelId: '',             → ID do Pixel da Meta, se for rodar anúncio no Face/Insta.
+    metaPixelId: '2018343195510481', → ID do Pixel da Meta: SÓ OS NÚMEROS. Não cole o código
+                                   <script> inteiro aqui: isso quebra a página (o código do
+                                   Pixel já está pronto dentro do js/main.js).
                                    Com ele preenchido a página registra PageView, "Lead"
                                    no envio do formulário e "Contact" no botão de WhatsApp.
     mensagemPadrao: '...',       → texto dos botões de WhatsApp direto
