@@ -41,7 +41,13 @@
     window.fbq('init', pixelId);
     window.fbq('track', 'PageView');
   }
-  const track = (event, data) => { if (pixelId && window.fbq) window.fbq('track', event, ...(data ? [data] : [])); };
+  const track = (event, data, opts) => {
+    if (!pixelId || !window.fbq) return;
+    const args = ['track', event];
+    if (data || opts) args.push(data || {});
+    if (opts) args.push(opts);
+    window.fbq(...args);
+  };
 
   /* ---------- Rodapé: ano e CRECI ---------- */
   $$('.js-year').forEach((el) => (el.textContent = new Date().getFullYear()));
@@ -266,6 +272,16 @@
   });
   if (form.elements.pagina) form.elements.pagina.value = location.href.split('#')[0];
 
+  // Identificadores da Meta para a API de Conversões (cookies do Pixel + fbclid do anúncio)
+  const cookie = (name) => (document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`)) || [])[1] || '';
+  let fbcFromUrl = '';
+  try {
+    const fbclid = params.get('fbclid');
+    if (fbclid) sessionStorage.setItem('fbc', `fb.1.${Date.now()}.${fbclid}`);
+    fbcFromUrl = sessionStorage.getItem('fbc') || '';
+  } catch (_) { /* navegação privada */ }
+  const newEventId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`);
+
   // Máscara do WhatsApp: (11) 91234-5678
   const phone = $('#f-whats');
   const digits = (s) => s.replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '');
@@ -325,8 +341,24 @@
     submit.disabled = true;
     submitLabel.textContent = 'Enviando...';
 
-    // Evento "Lead" do Pixel antes de sair da página, para dar tempo de ser enviado
-    track('Lead', { content_name: 'Joy Lapa', content_category: String(data.get('renda')) });
+    // Evento "Lead" no navegador (Pixel) e no servidor (API de Conversões) com o mesmo
+    // event_id, para a Meta contar uma vez só. Sai antes de abrir o WhatsApp.
+    const eventId = newEventId();
+    track('Lead', { content_name: 'Joy Lapa', content_category: String(data.get('renda')) }, { eventID: eventId });
+    const capi = pixelId ? fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_id: eventId,
+        nome,
+        whatsapp: digits(String(data.get('whatsapp'))),
+        renda: String(data.get('renda')),
+        url: location.href.split('#')[0],
+        fbp: cookie('_fbp'),
+        fbc: cookie('_fbc') || fbcFromUrl,
+      }),
+      keepalive: true,
+    }).catch(() => null) : null;
 
     // Salva o lead no Netlify Forms (espera de 0,6 s a 1,5 s) e abre o WhatsApp
     const body = new URLSearchParams(data).toString();
@@ -337,7 +369,7 @@
       keepalive: true,
     }).catch(() => null);
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    await Promise.all([Promise.race([save, wait(1500)]), wait(600)]);
+    await Promise.all([Promise.race([Promise.all([save, capi]), wait(1500)]), wait(600)]);
 
     const url = waUrl(msg);
     status.innerHTML = `Pronto! Abrindo o WhatsApp... Se não abrir, <a href="${url}" target="_blank" rel="noopener">toque aqui</a>.`;

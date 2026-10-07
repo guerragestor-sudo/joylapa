@@ -1,6 +1,16 @@
 [build]
   publish = "."
 
+[functions]
+  directory = "netlify/functions"
+
+# Não expõe o código das funções como arquivo estático
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404"
+  status = 404
+  force = true
+
 [[headers]]
   for = "/*"
   [headers.values]

@@ -52,19 +52,63 @@ Todas as imagens saíram do book oficial (BOOK JOY LAPA.pdf) e estão em assets/
   - og-image.jpg (1200 x 630) é a prévia que aparece quando o link é compartilhado.
 
 
-4) PUBLICAR NA NETLIFY
----------------------
-Opção mais simples:
-  1. Acesse https://app.netlify.com/drop
-  2. Arraste a pasta "joy-lapa" inteira.
-  3. Site configuration > Change site name → ex.: joylapa → https://joylapa.netlify.app
-  4. Ative a detecção de formulários (item 2) e publique de novo.
+4) PUBLICAR NA NETLIFY (pelo GitHub)
+------------------------------------
+O site tem uma função de servidor (API de Conversões, item 5). Ela só roda se o
+site for publicado pelo GitHub; arrastar a pasta no Netlify Drop NÃO roda funções.
+
+  1. Netlify > Add new site > Import an existing project > GitHub
+     → repositório guerragestor-sudo/joylapa · branch main
+     (deixe "Build command" vazio; "Publish directory" já vem do netlify.toml)
+  2. Site configuration > Change site name → ex.: joylapa → https://joylapa.netlify.app
+  3. Ative a detecção de formulários (item 2).
+  4. Configure o token da API de Conversões (item 5).
+  5. Deploys > Trigger deploy > Deploy site.
+
+Depois disso, cada "git push" na branch main publica o site sozinho.
 
 Se o endereço final NÃO for https://joylapa.netlify.app, troque no index.html:
 canonical, og:url, og:image e twitter:image.
 
 
-5) PONTOS PARA REVISAR ANTES DE ANUNCIAR
+5) API DE CONVERSÕES DA META (CAPI)
+-----------------------------------
+Além do Pixel no navegador, o evento "Lead" também é enviado pelo servidor
+(arquivo netlify/functions/lead.mjs). Isso recupera conversões perdidas por
+bloqueador de anúncio, iPhone e navegação privada. Telefone e nome vão
+criptografados (SHA-256). O Pixel e o servidor mandam o mesmo event_id, então
+a Meta conta o lead UMA vez só (deduplicação).
+
+O TOKEN NUNCA VAI NO CÓDIGO NEM NO GITHUB. Ele fica só na Netlify:
+
+  Site configuration > Environment variables > Add a variable
+    Key:   META_CAPI_TOKEN
+    Value: (cole o token gerado no Gerenciador de Eventos)
+    Marque "Contains secret values", se aparecer a opção.
+
+Opcionais:
+    META_PIXEL_ID          → padrão 2018343195510481 (só mude se trocar de Pixel)
+    META_TEST_EVENT_CODE   → código de teste (ex.: TEST12345)
+
+Depois de criar ou mudar variável, faça um novo deploy (Deploys > Trigger deploy).
+
+COMO TESTAR:
+  1. Gerenciador de Eventos > seu Pixel > Testar eventos: copie o código (TEST12345).
+  2. Crie a variável META_TEST_EVENT_CODE com esse código e faça um novo deploy.
+  3. Abra o site, preencha o formulário e envie.
+  4. Na tela "Testar eventos" deve aparecer "Lead" vindo do Navegador e do Servidor,
+     marcado como deduplicado.
+  5. APAGUE a variável META_TEST_EVENT_CODE e faça outro deploy. Enquanto ela
+     existir, os leads do servidor ficam só na aba de teste e não contam nas campanhas.
+
+Se algo der errado: Netlify > Logs > Functions > lead. Os erros da Meta
+aparecem lá com o prefixo [capi] (o token nunca é mostrado).
+
+Proteções da função: só aceita chamadas vindas do próprio site, valida os dados
+e limita a 10 envios por minuto por IP.
+
+
+6) PONTOS PARA REVISAR ANTES DE ANUNCIAR
 ----------------------------------------
 - Preços "a partir de" (R$ 229 mil / 249 mil / 299 mil) e "Escritura grátis":
   confirmar com a Cavazani se continuam valendo. O book também mostra uma
